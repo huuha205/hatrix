@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp,getApp, getApps } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
-import { getAuth, signInWithPopup, GoogleAuthProvider,onAuthStateChanged,signOut} from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { db } from './firebase'; 
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from "firebase/firestore";
 
@@ -17,41 +17,18 @@ const createIcon = (paths) => {
   }
 };
 
-// --- CẤU HÌNH FIREBASE ---
-const firebaseConfig = { 
-  apiKey : "AIzaSyB7JlffNvMZLi38W5SVOeA6_nEbLsBRqVU", 
-  authDomain : "hatrix-15679.firebaseapp.com", 
-  projectId : "hatrix-15679", 
-  storageBucket : "hatrix-15679.firebasestorage.app", 
-  messagingSenderId : "568768974431", 
-  appId : "1:568768974431:web:a667ae3dd02d6129c415ea", 
-  measurementId : "G-SGRKH5P0NF" 
-};
+// Lấy auth và các service khác trực tiếp từ app đã khởi tạo bên firebase.js
+const auth = getAuth(getApp());
+const googleProvider = new GoogleAuthProvider();
+const analytics = typeof window !== "undefined" ? getAnalytics(getApp()) : null;
 
+// Ép lưu phiên đăng nhập (như Hà đã làm)
+setPersistence(auth, browserLocalPersistence).catch(console.error);
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 
 // --- KHỞI TẠO FIREBASE DUY NHẤT 1 LẦN ---
-let app, auth, googleProvider, analytics;
 
-try {
-    if (getApps().length === 0) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
-    }
-    auth = getAuth(app);
-    googleProvider = new GoogleAuthProvider();
-    if (typeof window !== "undefined") {
-        analytics = getAnalytics(app);
-
-        googleProvider.setCustomParameters({
-      prompt: 'select_account'
-    });
-  
-    }
-} catch (e) {
-    console.warn("Firebase Init Error:", e);
-}
 
 // --- ĐỊNH NGHĨA CÁC ICON (Hà copy cụm này để thay cho lucide) ---
 const Play = createIcon(<polygon points="5 3 19 12 5 21 5 3" />);
@@ -2747,29 +2724,38 @@ function LoginScreen({ onLogin, isDarkMode, setIsDarkMode }) {
 
  
   const handleLogin = async (provider) => {
-    // 1. Kiểm tra xem Firebase có bị đứt kết nối ngầm không
     if (!auth) {
-      alert("Lỗi cực mạnh: Firebase chưa được kết nối ngầm!");
+      alert("Lỗi: Firebase chưa kết nối!");
       return;
     }
+    
+    // Nếu đang xoay loading rồi thì không cho bấm nữa (chống kẹt nút)
+    if (isLoading) return; 
 
     setIsLoading(provider);
     try {
       if (provider === 'google') {
-        googleProvider.setCustomParameters({ prompt: 'select_account' });
-        await signInWithPopup(auth, googleProvider);
+        const freshGoogleProvider = new GoogleAuthProvider();
+        freshGoogleProvider.setCustomParameters({ prompt: 'select_account' });
         
-        // 2. Ép web tải lại dữ liệu nếu React bị "lag" state
-        window.location.reload(); 
+        await signInWithPopup(auth, freshGoogleProvider);
+        // Không cần window.location.reload() ở đây nữa nhé!
       }
     } catch (error) {
-      console.error("Lỗi đăng nhập Firebase:", error);
-      // 3. LỆNH QUAN TRỌNG NHẤT: Bắn cái lỗi thẳng vào mặt để mình biết đường sửa!
-      alert("Thủ phạm làm web đứng im là đây: " + error.message); 
+      console.error("Lỗi đăng nhập:", error);
+      // Bắt lỗi nếu trình duyệt cố tình chặn Popup
+      if (error.code === 'auth/popup-blocked') {
+        alert("Trình duyệt đang chặn Popup đăng nhập. Vui lòng cấp quyền mở Popup cho trang web này!");
+      } else if (error.code !== 'auth/popup-closed-by-user') {
+        // Nếu người dùng không tự tắt cửa sổ thì mới báo lỗi
+        alert("Lỗi không thể đăng nhập: " + error.message);
+      }
     } finally {
       setIsLoading(null);
     }
   };
+  
+
   return (
     <div className={`min-h-screen w-full flex items-center justify-center ${isDarkMode ? 'bg-[#13151b]' : 'bg-gray-50'} p-4 transition-colors duration-500 relative overflow-hidden font-sans`}>
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] pointer-events-none"></div>
