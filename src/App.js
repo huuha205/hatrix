@@ -2745,24 +2745,31 @@ function AddMultipleWordsModal({ sets, onClose, onSave, isDarkMode,onCreateSet }
 function LoginScreen({ onLogin, isDarkMode, setIsDarkMode }) {
   const [isLoading, setIsLoading] = useState(null);
 
+ 
   const handleLogin = async (provider) => {
+    // 1. Kiểm tra xem Firebase có bị đứt kết nối ngầm không
+    if (!auth) {
+      alert("Lỗi cực mạnh: Firebase chưa được kết nối ngầm!");
+      return;
+    }
+
     setIsLoading(provider);
     try {
-      if (provider === 'google' && auth) {
-        googleProvider.setCustomParameters({
-          prompt: 'select_account' 
-        });
+      if (provider === 'google') {
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
         await signInWithPopup(auth, googleProvider);
-        // Đã xóa onLogin() ở đây. Firebase onAuthStateChanged sẽ tự động lo việc cho ông vào app!
+        
+        // 2. Ép web tải lại dữ liệu nếu React bị "lag" state
+        window.location.reload(); 
       }
     } catch (error) {
       console.error("Lỗi đăng nhập Firebase:", error);
-      // Đã xóa lệnh onLogin() ở đây để ngăn chặn việc "vô thẳng" khi lỗi
+      // 3. LỆNH QUAN TRỌNG NHẤT: Bắn cái lỗi thẳng vào mặt để mình biết đường sửa!
+      alert("Thủ phạm làm web đứng im là đây: " + error.message); 
     } finally {
       setIsLoading(null);
     }
   };
-
   return (
     <div className={`min-h-screen w-full flex items-center justify-center ${isDarkMode ? 'bg-[#13151b]' : 'bg-gray-50'} p-4 transition-colors duration-500 relative overflow-hidden font-sans`}>
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] pointer-events-none"></div>
