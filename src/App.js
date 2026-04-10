@@ -2969,9 +2969,9 @@ useEffect(() => {
             const q = query(collection(db, "vocabularies")); // "vocabularies" là tên bảng ông tạo
             const querySnapshot = await getDocs(q);
             const data = querySnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
+  ...doc.data(),
+  id: doc.id // <--- ID của Firebase phải nằm dưới cùng để không bị đè
+}));
             
             // Nếu trên mây có dữ liệu thì mới đè lên cái INITIAL_VOCAB mẫu
             if (data.length > 0) {
@@ -3132,7 +3132,7 @@ useEffect(() => {
       // 1. Chuẩn bị dữ liệu và thêm createdAt để sau này sắp xếp từ mới lên đầu
       const formattedWords = newWords.map(w => ({
         ...w, 
-        id: Date.now().toString() + Math.random(), 
+        
         level: 1, 
         correctCount: 0, 
         wrongCount: 0,
