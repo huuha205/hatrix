@@ -1,8 +1,8 @@
 /* eslint-disable */
 import React, { useState, useEffect, useMemo } from 'react';
-import { initializeApp } from 'firebase/app';
+import { initializeApp,getApp, getApps } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
-import { getAuth, signInWithPopup, GoogleAuthProvider,onAuthStateChanged} from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider,onAuthStateChanged,signOut} from 'firebase/auth';
 import { db } from './firebase'; 
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from "firebase/firestore";
 
@@ -34,7 +34,11 @@ const firebaseConfig = {
 let app, auth, googleProvider, analytics;
 
 try {
-    app = initializeApp(firebaseConfig);
+    if (getApps().length === 0) {
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
+    }
     auth = getAuth(app);
     googleProvider = new GoogleAuthProvider();
     if (typeof window !== "undefined") {
@@ -289,16 +293,13 @@ const GAME_INFO = {
 
 // --- 3. CÁC COMPONENT GIAO DIỆN TĨNH ---
 
-function TopBar({ activeTab, setActiveTab, isDarkMode, setIsDarkMode, streak, onLogout,user }) {
+function TopBar({ activeTab, setActiveTab, isDarkMode, setIsDarkMode, streak, onLogout, user }) {
   return (
     <div className={`w-full px-8 py-4 flex items-center justify-between z-10 relative border-b ${isDarkMode ? 'border-white/5 bg-[#1e1f29]' : 'border-gray-200 bg-white'} transition-colors duration-300`}>
       
       {/* Cụm Logo & Điều hướng */}
       <div className="flex items-center gap-10">
-        
-        {/* LOGO ĐƯỢC THIẾT KẾ LẠI */}
-        {/* LOGO ĐƯỢC THIẾT KẾ LẠI */}
-<div onClick={() => setActiveTab('home')} className="cursor-pointer flex items-center group hover:scale-105 transition-transform active:scale-95" title="HaTrix">
+        <div onClick={() => setActiveTab('home')} className="cursor-pointer flex items-center group hover:scale-105 transition-transform active:scale-95" title="HaTrix">
           <h1 className={`text-3xl font-black tracking-tighter uppercase transition-colors duration-300 ${isDarkMode ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 group-hover:from-indigo-400 group-hover:to-purple-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600 group-hover:from-purple-600 group-hover:to-indigo-700'}`}>
             HaTrix
           </h1>
@@ -327,7 +328,7 @@ function TopBar({ activeTab, setActiveTab, isDarkMode, setIsDarkMode, streak, on
       {/* Cụm Công cụ: Chế độ sáng tối, Chuỗi ngày, Tài khoản */}
       <div className="flex items-center gap-4">
         
-        {/* Nút Chế độ sáng/tối thu nhỏ */}
+        {/* Nút Chế độ sáng/tối */}
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)}
           className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}
@@ -341,46 +342,8 @@ function TopBar({ activeTab, setActiveTab, isDarkMode, setIsDarkMode, streak, on
           <Flame size={16} className="fill-orange-500 animate-bounce" /> {streak}
         </div>
 
-        {/* Nút Tài khoản thu nhỏ (Có Tooltip) */}
-       {/* Nút Tài khoản thu nhỏ (Đã sửa lỗi rớt Hover) */}
+        {/* Nút Tài khoản & Avatar */}
         <div className="relative group">
-          
-          {/* Ảnh Avatar */}
-          <div className="cursor-pointer hover:scale-105 transition-transform">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-green-400 to-blue-500 p-[2px] shadow-md">
-              <div className={`w-full h-full ${isDarkMode ? 'bg-[#1e1f29]' : 'bg-white'} rounded-[10px] flex items-center justify-center border-2 ${isDarkMode ? 'border-[#1e1f29]' : 'border-white'}`}>
-                <div className="w-2.5 h-2.5 bg-[#64bc04] rounded-full shadow-[0_0_12px_#64bc04] animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tooltip & Nút Đăng xuất (Có vùng đệm pt-3 tàng hình) */}
-          <div className="absolute right-0 top-11 pt-3 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
-            <div className={`px-3 py-2 rounded-xl text-xs font-black flex flex-col gap-2 ${isDarkMode ? 'bg-[#252733] text-white border border-white/10 shadow-2xl' : 'bg-white text-gray-800 border border-gray-100 shadow-xl'}`}>
-            
-              <div className="whitespace-nowrap px-2 py-1 text-center">
-                <div className="text-sm">{user?.displayName || 'Đang tải...'}</div>
-                <div className="text-[10px] font-medium text-gray-400 mt-0.5">{user?.email || 'Chưa đồng bộ'}</div>
-              </div>
-              <div className={`w-full h-[1px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'}`}></div>
-              <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:bg-red-500/10 px-2 py-1.5 rounded-lg transition-colors w-full text-left whitespace-nowrap cursor-pointer">
-                <LogOut size={14} /> Đăng xuất
-              </button>
-            </div>
-          </div>
-          
-        </div>
-
-      </div>
-    </div>
-
-    
-  );
-
-  {/* --- COPY TỪ ĐÂY: Nút Tài khoản thu nhỏ --- */}
-        <div className="relative group">
-          
-          {/* Ảnh Avatar */}
           <div className="cursor-pointer hover:scale-105 transition-transform">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-green-400 to-blue-500 p-[2px] shadow-md">
               <div className={`w-full h-full ${isDarkMode ? 'bg-[#1e1f29]' : 'bg-white'} rounded-[10px] flex items-center justify-center border-2 ${isDarkMode ? 'border-[#1e1f29]' : 'border-white'} overflow-hidden`}>
@@ -396,22 +359,24 @@ function TopBar({ activeTab, setActiveTab, isDarkMode, setIsDarkMode, streak, on
           {/* Tooltip & Nút Đăng xuất */}
           <div className="absolute right-0 top-11 pt-3 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
             <div className={`px-3 py-2 rounded-xl text-xs font-black flex flex-col gap-2 ${isDarkMode ? 'bg-[#252733] text-white border border-white/10 shadow-2xl' : 'bg-white text-gray-800 border border-gray-100 shadow-xl'}`}>
-              
               <div className="whitespace-nowrap px-2 py-1 text-center">
                 <div className="text-sm">{user?.displayName || 'Người dùng'}</div>
-                <div className="text-[10px] font-medium text-gray-400 mt-0.5">{user?.email || 'Tài khoản Khách'}</div>
+                <div className="text-[10px] font-medium text-gray-400 mt-0.5">{user?.email || 'Đang đồng bộ...'}</div>
               </div>
-
               <div className={`w-full h-[1px] ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'}`}></div>
               <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:bg-red-500/10 px-2 py-1.5 rounded-lg transition-colors w-full text-left whitespace-nowrap cursor-pointer">
                 <LogOut size={14} /> Đăng xuất
               </button>
             </div>
           </div>
-          
         </div>
-        {/* --- ĐẾN ĐÂY --- */}
+
+      </div>
+    </div>
+  );
 }
+
+  
 
 // --- 4. CÁC TAB CHỨC NĂNG ---
 
@@ -2784,18 +2749,15 @@ function LoginScreen({ onLogin, isDarkMode, setIsDarkMode }) {
     setIsLoading(provider);
     try {
       if (provider === 'google' && auth) {
+        googleProvider.setCustomParameters({
+          prompt: 'select_account' 
+        });
         await signInWithPopup(auth, googleProvider);
-        onLogin();
-      } else {
-        // Chế độ học thử (hoặc chạy khi ấn Guest)
-        setTimeout(() => {
-          onLogin();
-        }, 1500);
+        // Đã xóa onLogin() ở đây. Firebase onAuthStateChanged sẽ tự động lo việc cho ông vào app!
       }
     } catch (error) {
       console.error("Lỗi đăng nhập Firebase:", error);
-      alert("Lỗi đăng nhập: " + error.message + "\n\n(Đang tự động bỏ qua đưa bạn vào chế độ xem trước UI...)");
-      onLogin(); // Fallback dự phòng cho môi trường preview iframe bị chặn popup
+      // Đã xóa lệnh onLogin() ở đây để ngăn chặn việc "vô thẳng" khi lỗi
     } finally {
       setIsLoading(null);
     }
@@ -2954,6 +2916,7 @@ export default function App() {
   const handleUpdateWord = (updatedWord) => {
     setVocab(prevVocab => prevVocab.map(w => w.id === updatedWord.id ? updatedWord : w));
   };
+
   
  
   const handleSaveSet = (setId, updatedWords) => {
@@ -2997,6 +2960,9 @@ export default function App() {
   const [libraries, setLibraries] = useState(INITIAL_LIBRARIES); // State quản lý Lộ trình Sách
   const [currentUser, setCurrentUser] = useState(null);
 
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   // 2. DÁN NGUYÊN KHỐI NÀY VÀO ĐÂY:
 useEffect(() => {
     if (auth) {
@@ -3023,11 +2989,13 @@ useEffect(() => {
             console.error("Lỗi lấy dữ liệu: ", error);
           }
           // -------------------------------------------------------
-
+        
+          setIsCheckingAuth(false);
         } else {
           setCurrentUser(null);
           setIsLoggedIn(false);
           setVocab(INITIAL_VOCAB); // Đăng xuất thì hiện lại đồ mẫu
+          setIsCheckingAuth(false);
         }
       });
       return () => unsubscribe();
@@ -3179,6 +3147,14 @@ useEffect(() => {
     setCurrentGame(gameId);
   };
 
+  if (isCheckingAuth) {
+    return (
+      <div className={`flex h-screen items-center justify-center ${isDarkMode ? 'bg-[#13151b]' : 'bg-gray-50'}`}>
+         <div className="animate-spin w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
+      </div>
+    );
+  }
+
   if (!isLoggedIn) {
     return <LoginScreen onLogin={() => setIsLoggedIn(true)} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />;
   }
@@ -3228,7 +3204,7 @@ useEffect(() => {
 
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-[#13151b] text-white' : 'bg-gray-50 text-gray-900'} overflow-hidden font-sans transition-colors duration-300`}>
-      {!currentGame && <TopBar activeTab={activeTab} setActiveTab={setActiveTab} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} streak={streak} onLogout={() => setIsLoggedIn(false)} user={currentUser}/>}
+     {!currentGame && <TopBar activeTab={activeTab} setActiveTab={setActiveTab} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} streak={streak} onLogout={handleLogout} user={currentUser}/>}
       <div className="flex-1 relative overflow-y-auto">
         {renderContent()}
       </div>
