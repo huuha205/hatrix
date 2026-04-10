@@ -4,7 +4,7 @@ import { initializeApp,getApp, getApps } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { db } from './firebase'; 
-import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, getDocs, onSnapshot, query, orderBy,deleteDoc, doc,updateDoc } from "firebase/firestore";
 
 // --- TỰ ĐỊNH NGHĨA ICON (Hà giữ nguyên phần này) ---
 const createIcon = (paths) => {
@@ -3083,17 +3083,48 @@ useEffect(() => {
     }, ...prev].slice(0, 15));
   };
 
-  const handleBulkAction = (action, wordIds) => {
+  // --- HÀM XỬ LÝ DỮ LIỆU TRÊN CLOUD (THAY THẾ CỤM CŨ CỦA HÀ) ---
+  const handleBulkAction = async (action, wordIds) => {
     if (action === 'mastered') {
-      setVocab(prev => prev.map(w => wordIds.includes(w.id) ? { ...w, level: 5 } : w));
-    } else if (action === 'delete') {
-      setVocab(prev => prev.filter(w => !wordIds.includes(w.id)));
+      try {
+        // Cập nhật level 5 lên mây
+        const updatePromises = wordIds.map(wordId => 
+          updateDoc(doc(db, "vocabularies", wordId), { level: 5 })
+        );
+        await Promise.all(updatePromises);
+        setVocab(prev => prev.map(w => wordIds.includes(w.id) ? { ...w, level: 5 } : w));
+        console.log("Đã lưu trạng thái thuộc bài lên mây!");
+      } catch (e) { console.error("Lỗi cập nhật:", e); }
+    } 
+    else if (action === 'delete') {
+      try {
+        // Xóa vĩnh viễn trên mây
+        const deletePromises = wordIds.map(wordId => 
+          deleteDoc(doc(db, "vocabularies", wordId))
+        );
+        await Promise.all(deletePromises);
+        setVocab(prev => prev.filter(w => !wordIds.includes(w.id)));
+        console.log("Đã xóa vĩnh viễn khỏi mây!");
+      } catch (e) { console.error("Lỗi xóa từ:", e); }
     }
   };
 
-  const handleCreateSet = (newSet) => setSets([...sets, newSet]);
-  const handleDeleteSet = (setId) => {
-    setSets(prevSets => prevSets.filter(s => s.id !== setId));
+  const handleCreateSet = async (newSet) => {
+    try {
+      // Lưu bộ từ vào bảng "sets" trên Firebase
+      const docRef = await addDoc(collection(db, "sets"), newSet);
+      setSets([...sets, { ...newSet, id: docRef.id }]);
+      console.log("Đã tạo bộ từ mới trên mây!");
+    } catch (e) { console.error("Lỗi tạo bộ từ:", e); }
+  };
+
+  const handleDeleteSet = async (setId) => {
+    try {
+      // Xóa bộ từ trên mây
+      await deleteDoc(doc(db, "sets", setId));
+      setSets(prevSets => prevSets.filter(s => s.id !== setId));
+      console.log("Đã xóa bộ từ trên mây!");
+    } catch (e) { console.error("Lỗi xóa bộ từ:", e); }
   };
 
  const handleSaveMultiple = async (setId, newWords) => {
