@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signInWithPopup, GoogleAuthProvider,onAuthStateChanged} from 'firebase/auth';
-
+import { db } from './firebase'; 
+import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from "firebase/firestore";
 
 // --- TỰ ĐỊNH NGHĨA ICON (Hà giữ nguyên phần này) ---
 const createIcon = (paths) => {
@@ -2997,36 +2998,42 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
 
   // 2. DÁN NGUYÊN KHỐI NÀY VÀO ĐÂY:
-  useEffect(() => {
+useEffect(() => {
     if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
-          setCurrentUser(user); // Mấu chốt là dòng này: Lưu thông tin Google vào biến!
+          setCurrentUser(user);
           setIsLoggedIn(true);
+
+          // --- ĐOẠN NÀY LÀ MẤU CHỐT: Lấy dữ liệu từ Firestore về ---
+          try {
+            const q = query(collection(db, "vocabularies")); // "vocabularies" là tên bảng ông tạo
+            const querySnapshot = await getDocs(q);
+            const data = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            
+            // Nếu trên mây có dữ liệu thì mới đè lên cái INITIAL_VOCAB mẫu
+            if (data.length > 0) {
+              setVocab(data); 
+            }
+            console.log("Đã tải dữ liệu từ mây về cho Hà!");
+          } catch (error) {
+            console.error("Lỗi lấy dữ liệu: ", error);
+          }
+          // -------------------------------------------------------
+
         } else {
           setCurrentUser(null);
           setIsLoggedIn(false);
+          setVocab(INITIAL_VOCAB); // Đăng xuất thì hiện lại đồ mẫu
         }
       });
       return () => unsubscribe();
     }
   }, []);
 
-  // <-- THÊM NGUYÊN ĐOẠN useEffect NÀY VÀO -->
-  useEffect(() => {
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          setCurrentUser(user);
-          setIsLoggedIn(true);
-        } else {
-          setCurrentUser(null);
-          setIsLoggedIn(false);
-        }
-      });
-      return () => unsubscribe();
-    }
-  }, []);
 
   // <-- THÊM HÀM ĐĂNG XUẤT NÀY VÀO -->
   const handleLogout = () => {
@@ -3128,10 +3135,37 @@ export default function App() {
     setSets(prevSets => prevSets.filter(s => s.id !== setId));
   };
 
-  const handleSaveMultiple = (setId, newWords) => {
-    const formattedWords = newWords.map(w => ({...w, id: Date.now().toString() + Math.random(), level: 1, correctCount: 0, wrongCount: 0}));
-    setVocab([...vocab, ...formattedWords]);
-    setSets(sets.map(s => s.id === setId ? {...s, wordIds: [...s.wordIds, ...formattedWords.map(w=>w.id)]} : s));
+ const handleSaveMultiple = async (setId, newWords) => {
+    try {
+      // 1. Chuẩn bị dữ liệu và thêm createdAt để sau này sắp xếp từ mới lên đầu
+      const formattedWords = newWords.map(w => ({
+        ...w, 
+        id: Date.now().toString() + Math.random(), 
+        level: 1, 
+        correctCount: 0, 
+        wrongCount: 0,
+        createdAt: new Date().getTime() // Thêm mốc thời gian để lưu
+      }));
+
+      // 2. LƯU LÊN FIREBASE (Singapore)
+      // Chúng ta dùng vòng lặp để đẩy từng từ trong danh sách mới vào collection "vocabularies"
+      const savePromises = formattedWords.map(word => 
+        addDoc(collection(db, "vocabularies"), word)
+      );
+      await Promise.all(savePromises); 
+
+      // 3. Cập nhật giao diện (State) như cũ để người dùng thấy ngay kết quả
+      setVocab([...vocab, ...formattedWords]);
+      setSets(sets.map(s => s.id === setId ? {
+        ...s, 
+        wordIds: [...s.wordIds, ...formattedWords.map(w => w.id)]
+      } : s));
+
+      console.log("Đã lưu thành công " + newWords.length + " từ lên Firebase!");
+    } catch (error) {
+      console.error("Lỗi khi lưu nhiều từ: ", error);
+      alert("Có lỗi khi lưu lên mây, Hà kiểm tra lại nhé!");
+    }
   };
 
   const handleStartGame = (gameId) => {
