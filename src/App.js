@@ -3358,7 +3358,7 @@ if (libData.length > 0) {
     setCurrentGame(gameId);
   };
 
-  const handleStartCustomGame = (gameId, words) => {
+  const handleStartCustomGame = (gameId, words, source = null) => { 
     updateStreak();
     setCustomSessionWords(words);
     setCurrentGame(gameId);
