@@ -645,7 +645,7 @@ function ThematicVocabView({ libraries, setLibraries, onClose, onStartCustomGame
       // 1. Thêm thông tin chủ nhân cuốn sách
       const libWithUser = {
         ...newLib,
-        userId: currentUser.uid, // <-- Dùng currentUser thay vì auth.currentUser cho chắc chắn
+        userId: auth.currentUser.uid, // <-- Chữ auth.currentUser.uid mới là chân ái ở đây!
         createdAt: Date.now()
       };
       
