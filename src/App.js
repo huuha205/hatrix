@@ -2704,9 +2704,12 @@ function AddMultipleWordsModal({ sets, onClose, onSave, isDarkMode,onCreateSet }
           <CreateSetModal 
             isDarkMode={isDarkMode} 
             onClose={() => setIsCreatingSet(false)} 
-            onCreate={(newSet) => {
-              if (onCreateSet) onCreateSet(newSet);
-              setSelectedSetId(newSet.id);
+            // SỬA LẠI ĐOẠN onCreate NÀY:
+            onCreate={async (newSet) => {
+              if (onCreateSet) {
+                const realId = await onCreateSet(newSet); // Đợi Firebase cấp ID thật
+                if (realId) setSelectedSetId(realId); // Cập nhật ô chọn bằng ID thật
+              }
             }} 
           />
         )}
@@ -3129,24 +3132,25 @@ export default function App() {
   };
 
   const handleCreateSet = async (newSet) => {
-  try {
-    const setWithUser = {
-      ...newSet,
-      userId: currentUser.uid, // Gắn chủ sở hữu
-      wordIds: [], // Mặc định mới tạo là rỗng
-      createdAt: new Date().getTime()
-    };
+    try {
+      delete newSet.id; // <--- Xóa cái ID giả do giao diện đẻ ra đi
 
-    // Lưu vĩnh viễn lên Firebase
-    const docRef = await addDoc(collection(db, "sets"), setWithUser);
-    
-    // Cập nhật giao diện với ID thật từ Firebase cấp
-    setSets(prev => [...prev, { ...setWithUser, id: docRef.id }]);
-    console.log("Đã tạo bộ từ thành công trên Firebase!");
-  } catch (e) {
-    console.error("Lỗi tạo bộ từ:", e);
-  }
-};
+      const setWithUser = {
+        ...newSet,
+        userId: currentUser.uid,
+        wordIds: [],
+        createdAt: new Date().getTime()
+      };
+
+      const docRef = await addDoc(collection(db, "sets"), setWithUser);
+      setSets(prev => [...prev, { ...setWithUser, id: docRef.id }]);
+      
+      console.log("Đã tạo bộ từ thành công trên Firebase!");
+      return docRef.id; // <--- QUAN TRỌNG: Trả về ID thật do Firebase cấp
+    } catch (e) {
+      console.error("Lỗi tạo bộ từ:", e);
+    }
+  };
 
   const handleDeleteSet = async (setId) => {
     try {
