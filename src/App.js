@@ -3132,6 +3132,7 @@ if (libData.length > 0) {
 
   const [currentGame, setCurrentGame] = useState(null);
   const [currentSet, setCurrentSet] = useState(null);
+  const [gameSource, setGameSource] = useState(null);
   const [isAddMultipleOpen, setIsAddMultipleOpen] = useState(false);
   const [isSRSModalOpen, setIsSRSModalOpen] = useState(false);
   const [customSessionWords, setCustomSessionWords] = useState(null);
@@ -3250,7 +3251,7 @@ if (libData.length > 0) {
       alert("Chưa lưu được lên đám mây, hãy kiểm tra mạng hoặc quyền truy cập!");
     }
   };
-  
+
   // --- HÀM XỬ LÝ DỮ LIỆU TRÊN CLOUD (THAY THẾ CỤM CŨ CỦA HÀ) ---
   const handleBulkAction = async (action, wordIds) => {
     if (action === 'mastered') {
@@ -3360,6 +3361,7 @@ if (libData.length > 0) {
     updateStreak();
     setCustomSessionWords(words);
     setCurrentGame(gameId);
+    setGameSource(source);
   };
 
   if (isCheckingAuth) {
