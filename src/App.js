@@ -790,10 +790,10 @@ function ThematicVocabView({ libraries, setLibraries, onClose, onStartCustomGame
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {gameModes.map(game => (
               <div 
-                key={game.id} 
-                onClick={() => filteredWords.length > 0 && onStartCustomGame(game.id, filteredWords)}
-                className={`${game.color} rounded-2xl p-5 flex flex-col items-center justify-center text-white cursor-pointer hover:-translate-y-1 transition-all shadow-lg relative ${filteredWords.length === 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
-              >
+  key={game.id} 
+  onClick={() => filteredWords.length > 0 && onStartCustomGame(game.id, filteredWords, { type: 'library', libraryId: selectedLibraryId, chapterId: selectedChapterId })}
+  className={`${game.color} rounded-2xl p-5 flex flex-col items-center justify-center text-white cursor-pointer hover:-translate-y-1 transition-all shadow-lg relative ${filteredWords.length === 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+>
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-3 backdrop-blur-sm">
                   <game.icon size={20} />
                 </div>
