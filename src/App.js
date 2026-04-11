@@ -3164,70 +3164,93 @@ if (libData.length > 0) {
 
   const handleSaveGameResults = async (sessionResults) => {
     try {
-      // 1. CẬP NHẬT TỪ VỰNG LÊN FIREBASE (Nhảy thẳng lên level 5 nếu đúng)
-      const updatePromises = sessionResults.map(res => {
-        const word = vocab.find(w => w.id === res.word.id);
-        if (word) {
-          let newLevel = res.isCorrect ? 5 : Math.max(1, (word.level || 1) - 1);
-          const interval = LEVEL_INTERVALS[newLevel] || LEVEL_INTERVALS[1];
-
-          return updateDoc(doc(db, "vocabularies", word.id), {
-            level: newLevel,
-            nextReview: Date.now() + interval,
-            correctCount: res.isCorrect ? (word.correctCount || 0) + 1 : (word.correctCount || 0),
-            wrongCount: !res.isCorrect ? (word.wrongCount || 0) + 1 : (word.wrongCount || 0)
-          });
-        }
-        return null;
-      }).filter(p => p !== null);
-
-      await Promise.all(updatePromises);
-
-      // 2. LƯU LỊCH SỬ GAME LÊN FIREBASE
+      // 1. LƯU LỊCH SỬ GAME (Chung cho cả 2 loại game)
       const correctCount = sessionResults.filter(r => r.isCorrect).length;
       const accuracy = Math.round((correctCount / Math.max(1, sessionResults.length)) * 100);
       
       const newHistoryRecord = {
-        userId: currentUser.uid, // Cần có userId để bảo mật
+        userId: currentUser.uid,
         gameId: currentGame === 'srs' ? 'srs' : currentGame,
         date: Date.now(),
         accuracy: accuracy
       };
 
-      // Thêm vào bảng 'history' trên Firebase
       const docRef = await addDoc(collection(db, "history"), newHistoryRecord);
-      const historyWithId = { ...newHistoryRecord, id: docRef.id };
+      setGameHistory(prev => [{ ...newHistoryRecord, id: docRef.id }, ...prev].slice(0, 15));
 
-      // 3. CẬP NHẬT GIAO DIỆN HIỂN THỊ
-      setVocab(prevVocab => {
-        const updatedVocab = [...prevVocab];
-        sessionResults.forEach(res => {
-          const index = updatedVocab.findIndex(w => w.id === res.word.id);
-          if (index !== -1) {
-            const word = updatedVocab[index];
+      // 2. XỬ LÝ LƯU ĐIỂM TỪ VỰNG (Rẽ nhánh)
+      if (gameSource?.type === 'library') {
+        // --- TRƯỜNG HỢP: GAME TRONG SÁCH (LỘ TRÌNH HỌC) ---
+        const { libraryId, chapterId } = gameSource;
+        let chaptersToSave = null;
+
+        setLibraries(prevLibs => {
+          return prevLibs.map(lib => {
+            if (lib.id === libraryId) {
+              const updatedChapters = lib.chapters.map(chap => {
+                if (chap.id === chapterId) {
+                  const updatedWords = chap.words.map(w => {
+                    const res = sessionResults.find(r => r.word.id === w.id);
+                    // Nếu đúng thì gán level 5 và tick xanh (isMastered)
+                    if (res && res.isCorrect) return { ...w, isMastered: true, level: 5 };
+                    return w;
+                  });
+                  return { ...chap, words: updatedWords };
+                }
+                return chap;
+              });
+              chaptersToSave = updatedChapters; 
+              return { ...lib, chapters: updatedChapters };
+            }
+            return lib;
+          });
+        });
+
+        if (chaptersToSave) {
+          await updateDoc(doc(db, "libraries", libraryId), { chapters: chaptersToSave });
+        }
+
+      } else {
+        // --- TRƯỜNG HỢP: GAME TỪ VỰNG CHUNG (Dưới local của Hà) ---
+        const updatePromises = sessionResults.map(res => {
+          const word = vocab.find(w => w.id === res.word.id);
+          if (word) {
             let newLevel = res.isCorrect ? 5 : Math.max(1, (word.level || 1) - 1);
             const interval = LEVEL_INTERVALS[newLevel] || LEVEL_INTERVALS[1];
-            updatedVocab[index] = {
-              ...word,
+            return updateDoc(doc(db, "vocabularies", word.id), {
               level: newLevel,
               nextReview: Date.now() + interval,
               correctCount: res.isCorrect ? (word.correctCount || 0) + 1 : (word.correctCount || 0),
-              wrongCount: !res.isCorrect ? (word.wrongCount || 0) + 1 : (word.wrongCount || 0),
-            };
+              wrongCount: !res.isCorrect ? (word.wrongCount || 0) + 1 : (word.wrongCount || 0)
+            });
           }
+          return null;
+        }).filter(p => p !== null);
+
+        await Promise.all(updatePromises);
+
+        setVocab(prevVocab => {
+          const updatedVocab = [...prevVocab];
+          sessionResults.forEach(res => {
+            const index = updatedVocab.findIndex(w => w.id === res.word.id);
+            if (index !== -1) {
+              const word = updatedVocab[index];
+              let newLevel = res.isCorrect ? 5 : Math.max(1, (word.level || 1) - 1);
+              const interval = LEVEL_INTERVALS[newLevel] || LEVEL_INTERVALS[1];
+              updatedVocab[index] = { ...word, level: newLevel, nextReview: Date.now() + interval };
+            }
+          });
+          return updatedVocab;
         });
-        return updatedVocab;
-      });
+      }
 
-      setGameHistory(prev => [historyWithId, ...prev].slice(0, 15));
-      console.log("Đã đồng bộ từ vựng và lịch sử lên Firebase!");
-
+      console.log("Đã đồng bộ kết quả lên Firebase thành công!");
     } catch (e) {
       console.error("Lỗi đồng bộ lên mây: ", e);
-      alert("Chưa lưu được lên đám mây, hãy kiểm tra mạng nhé!");
+      alert("Chưa lưu được lên đám mây, hãy kiểm tra mạng hoặc quyền truy cập!");
     }
   };
-
+  
   // --- HÀM XỬ LÝ DỮ LIỆU TRÊN CLOUD (THAY THẾ CỤM CŨ CỦA HÀ) ---
   const handleBulkAction = async (action, wordIds) => {
     if (action === 'mastered') {
@@ -3351,68 +3374,50 @@ if (libData.length > 0) {
     return <LoginScreen onLogin={() => setIsLoggedIn(true)} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />;
   }
 
-  const renderContent = () => {
-    if (currentGame) {
-       let gameSessionWords = customSessionWords || shuffleArray(vocab.filter(w => w.level < 5 || (w.nextReview && w.nextReview <= Date.now()))).slice(0, 5);
-       
-       if (gameSessionWords.length === 0) {
-         return (
-           <div className="flex flex-col items-center justify-center h-full text-white space-y-6">
-             <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center text-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]"><Check size={48} strokeWidth={4}/></div>
-             <h2 className={`text-4xl font-black ${isDarkMode ? 'text-white' : 'text-gray-900'} uppercase tracking-widest`}>Tuyệt vời!</h2>
-             <p className="text-gray-400 font-medium text-lg">Bạn đã học hết từ hiện có.</p>
-             <button onClick={() => { setCurrentGame(null); setCustomSessionWords(null); }} className="bg-indigo-600 hover:bg-indigo-500 px-10 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-xl mt-4">Quay lại</button>
-           </div>
-         );
-       }
-
-       if (currentGame === 'flashcard') {
-           return <FlashcardGame sessionWords={gameSessionWords} onFinish={() => { setCurrentGame(null); setCustomSessionWords(null); }} onQuit={() => { setCurrentGame(null); setCustomSessionWords(null); }} isDarkMode={isDarkMode} />;
-       }
-       
-       return <PracticeSession sessionWords={gameSessionWords} allVocab={vocab} gameType={currentGame === 'srs' ? 'mixed' : currentGame} subMode="en-vn" onFinish={() => {setCurrentGame(null); setCustomSessionWords(null)}} onQuit={() => {setCurrentGame(null); setCustomSessionWords(null)}} onUpdateMastered={handleSaveGameResults} isDarkMode={isDarkMode} />;
-    }
-
-    switch (activeTab) {
-      case 'home': return <HomeTab vocab={vocab} onNavigate={setActiveTab} isDarkMode={isDarkMode} streak={streak} onSimulateNextDay={handleSimulateNextDay} />;
-      case 'sets': return <SetsTab sets={sets} vocab={vocab} onCreateSet={handleCreateSet} onDeleteSet={handleDeleteSet} onOpenSet={setCurrentSet} libraries={libraries} setLibraries={setLibraries} onStartCustomGame={handleStartCustomGame} isDarkMode={isDarkMode} />;
-      
-      // CHỖ NÀY PHẢI TRUYỀN ĐỦ onUpdateWord
-      case 'vocab': return (
-        <VocabTab 
-          vocab={vocab} 
-          onToggleMastered={handleToggleMastered} 
-          onBulkAction={handleBulkAction} 
-          onOpenAddMultiple={() => setIsAddMultipleOpen(true)} 
-          isDarkMode={isDarkMode}  
-          onUpdateWord={handleUpdateWord}
-        />
+  // 1. TÁCH RIÊNG HÀM HIỂN THỊ GAME
+  const renderGameContent = () => {
+    if (!currentGame) return null;
+    let gameSessionWords = customSessionWords || shuffleArray(vocab.filter(w => w.level < 5 || (w.nextReview && w.nextReview <= Date.now()))).slice(0, 5);
+    
+    if (gameSessionWords.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-white space-y-6">
+          <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center text-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]"><Check size={48} strokeWidth={4}/></div>
+          <h2 className={`text-4xl font-black ${isDarkMode ? 'text-white' : 'text-gray-900'} uppercase tracking-widest`}>Tuyệt vời!</h2>
+          <p className="text-gray-400 font-medium text-lg">Bạn đã học hết từ hiện có.</p>
+          <button onClick={() => { setCurrentGame(null); setCustomSessionWords(null); setGameSource(null); }} className="bg-indigo-600 hover:bg-indigo-500 px-10 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-xl mt-4">Quay lại</button>
+        </div>
       );
-
-      case 'games': return <GamesTab vocab={vocab} sets={sets} onStartCustomGame={handleStartCustomGame} onOpenSRS={() => { updateStreak(); setIsSRSModalOpen(true); }} history={gameHistory} isDarkMode={isDarkMode} />;
-      default: return <HomeTab vocab={vocab} onNavigate={setActiveTab} isDarkMode={isDarkMode} streak={streak} onSimulateNextDay={handleSimulateNextDay} />;
     }
+
+    if (currentGame === 'flashcard') {
+      return <FlashcardGame sessionWords={gameSessionWords} onFinish={(results) => { if (results && results.length > 0) handleSaveGameResults(results); setCurrentGame(null); setCustomSessionWords(null); setGameSource(null); }} onQuit={() => { setCurrentGame(null); setCustomSessionWords(null); setGameSource(null); }} isDarkMode={isDarkMode} />;
+    }
+    
+    return <PracticeSession sessionWords={gameSessionWords} allVocab={vocab} gameType={currentGame === 'srs' ? 'mixed' : currentGame} subMode="en-vn" onFinish={() => {setCurrentGame(null); setCustomSessionWords(null); setGameSource(null);}} onQuit={() => {setCurrentGame(null); setCustomSessionWords(null); setGameSource(null);}} onUpdateMastered={handleSaveGameResults} isDarkMode={isDarkMode} />;
   };
 
+  // 2. CẬP NHẬT RETURN CHÍNH (Sử dụng tuyệt chiêu "Ẩn" thay vì "Xóa")
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-[#13151b] text-white' : 'bg-gray-50 text-gray-900'} overflow-hidden font-sans transition-colors duration-300`}>
-     {!currentGame && <TopBar activeTab={activeTab} setActiveTab={setActiveTab} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} streak={streak} onLogout={handleLogout} user={currentUser}/>}
+      {!currentGame && <TopBar activeTab={activeTab} setActiveTab={setActiveTab} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} streak={streak} onLogout={handleLogout} user={currentUser}/>}
       <div className="flex-1 relative overflow-y-auto">
-        {renderContent()}
+        
+        {/* Chỉ hiện Game khi đang chơi */}
+        {renderGameContent()}
+
+        {/* ẨN CÁC TAB ĐI NẾU CÓ GAME (Giúp các tab không bị mất trí nhớ) */}
+        <div className={currentGame ? "hidden" : "block"}>
+          {activeTab === 'home' && <HomeTab vocab={vocab} onNavigate={setActiveTab} isDarkMode={isDarkMode} streak={streak} onSimulateNextDay={handleSimulateNextDay} />}
+          {activeTab === 'sets' && <SetsTab sets={sets} vocab={vocab} onCreateSet={handleCreateSet} onDeleteSet={handleDeleteSet} onOpenSet={setCurrentSet} libraries={libraries} setLibraries={setLibraries} onStartCustomGame={handleStartCustomGame} isDarkMode={isDarkMode} />}
+          {activeTab === 'vocab' && <VocabTab vocab={vocab} onToggleMastered={handleToggleMastered} onBulkAction={handleBulkAction} onOpenAddMultiple={() => setIsAddMultipleOpen(true)} isDarkMode={isDarkMode} onUpdateWord={handleUpdateWord} />}
+          {activeTab === 'games' && <GamesTab vocab={vocab} sets={sets} onStartCustomGame={handleStartCustomGame} onOpenSRS={() => { updateStreak(); setIsSRSModalOpen(true); }} history={gameHistory} isDarkMode={isDarkMode} />}
+        </div>
+
       </div>
 
       {isAddMultipleOpen && <AddMultipleWordsModal isDarkMode={isDarkMode} sets={sets} onClose={() => setIsAddMultipleOpen(false)} onSave={handleSaveMultiple} onCreateSet={handleCreateSet} />}
-      {currentSet && (
-        <SetDetailModal 
-          isDarkMode={isDarkMode} 
-          set={currentSet} 
-          vocab={vocab} 
-          onClose={() => setCurrentSet(null)} 
-          // Sửa dòng này: Vì bạn chưa viết handleSaveSet, hãy dùng hàm tạm để không lỗi
-          onSave={handleSaveSet}
-          onUpdateWord={handleUpdateWord} 
-        />
-      )}
+      {currentSet && <SetDetailModal isDarkMode={isDarkMode} set={currentSet} vocab={vocab} onClose={() => setCurrentSet(null)} onSave={handleSaveSet} onUpdateWord={handleUpdateWord} />}
       {isSRSModalOpen && <SRSOverviewModal isDarkMode={isDarkMode} vocab={vocab} sets={sets} onClose={() => setIsSRSModalOpen(false)} onStartReview={(words) => { setCustomSessionWords(words); setCurrentGame('srs'); setIsSRSModalOpen(false); }} />}
     </div>
   );
