@@ -2957,37 +2957,56 @@ export default function App() {
 
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   // 2. DÁN NGUYÊN KHỐI NÀY VÀO ĐÂY:
-useEffect(() => {
+
+  useEffect(() => {
     if (auth) {
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
           setCurrentUser(user);
           setIsLoggedIn(true);
 
-          // --- ĐOẠN NÀY LÀ MẤU CHỐT: Lấy dữ liệu từ Firestore về ---
           try {
-            const q = query(collection(db, "vocabularies"),where("userId", "==", user.uid)); // "vocabularies" là tên bảng ông tạo
-            const querySnapshot = await getDocs(q);
-            const data = querySnapshot.docs.map(doc => ({
-  ...doc.data(),
-  id: doc.id // <--- ID của Firebase phải nằm dưới cùng để không bị đè
-}));
+            // --- PHẦN 1: LẤY TỪ VỰNG (Giống code cũ của Hà) ---
+            const qVocab = query(
+              collection(db, "vocabularies"),
+              where("userId", "==", user.uid)
+            );
+            const vocabSnapshot = await getDocs(qVocab);
+            const vocabData = vocabSnapshot.docs.map(doc => ({
+              ...doc.data(),
+              id: doc.id
+            }));
             
-            // Nếu trên mây có dữ liệu thì mới đè lên cái INITIAL_VOCAB mẫu
-            if (data.length > 0) {
-              setVocab(data); 
+            if (vocabData.length > 0) {
+              setVocab(vocabData);
             }
-            console.log("Đã tải dữ liệu từ mây về cho Hà!");
+
+            // --- PHẦN 2: LẤY BỘ TỪ (Đây là phần code MỚI được thêm vào) ---
+            const qSets = query(
+              collection(db, "sets"),
+              where("userId", "==", user.uid)
+            );
+            const setsSnapshot = await getDocs(qSets);
+            const setsData = setsSnapshot.docs.map(doc => ({
+              ...doc.data(),
+              id: doc.id
+            }));
+
+            if (setsData.length > 0) {
+              setSets(setsData);
+            }
+
+            console.log("Đã tải xong CẢ TỪ VỰNG VÀ BỘ TỪ từ mây cho Hà!");
           } catch (error) {
             console.error("Lỗi lấy dữ liệu: ", error);
           }
-          // -------------------------------------------------------
-        
+
           setIsCheckingAuth(false);
         } else {
           setCurrentUser(null);
           setIsLoggedIn(false);
-          setVocab(INITIAL_VOCAB); // Đăng xuất thì hiện lại đồ mẫu
+          setVocab(INITIAL_VOCAB);
+          setSets(INITIAL_SETS); // Thêm dòng này để xóa bộ từ khi đăng xuất
           setIsCheckingAuth(false);
         }
       });
@@ -3110,13 +3129,24 @@ useEffect(() => {
   };
 
   const handleCreateSet = async (newSet) => {
-    try {
-      // Lưu bộ từ vào bảng "sets" trên Firebase
-      const docRef = await addDoc(collection(db, "sets"), newSet);
-      setSets([...sets, { ...newSet, id: docRef.id }]);
-      console.log("Đã tạo bộ từ mới trên mây!");
-    } catch (e) { console.error("Lỗi tạo bộ từ:", e); }
-  };
+  try {
+    const setWithUser = {
+      ...newSet,
+      userId: currentUser.uid, // Gắn chủ sở hữu
+      wordIds: [], // Mặc định mới tạo là rỗng
+      createdAt: new Date().getTime()
+    };
+
+    // Lưu vĩnh viễn lên Firebase
+    const docRef = await addDoc(collection(db, "sets"), setWithUser);
+    
+    // Cập nhật giao diện với ID thật từ Firebase cấp
+    setSets(prev => [...prev, { ...setWithUser, id: docRef.id }]);
+    console.log("Đã tạo bộ từ thành công trên Firebase!");
+  } catch (e) {
+    console.error("Lỗi tạo bộ từ:", e);
+  }
+};
 
   const handleDeleteSet = async (setId) => {
     try {
@@ -3127,36 +3157,49 @@ useEffect(() => {
     } catch (e) { console.error("Lỗi xóa bộ từ:", e); }
   };
 
- const handleSaveMultiple = async (setId, newWords) => {
-  try {
-    // 1. Gắn userId và chuẩn bị dữ liệu từ vựng
-    const formattedWords = newWords.map(w => ({
-      ...w,
-      userId: currentUser.uid,
-      level: 1,
-      createdAt: new Date().getTime()
-    }));
 
-    // 2. Lưu từng từ lên Firestore và lấy về các ID thật do Firebase cấp
-    const savePromises = formattedWords.map(word => addDoc(collection(db, "vocabularies"), word));
-    const docRefs = await Promise.all(savePromises);
-    const newWordIds = docRefs.map(ref => ref.id); // Đây là danh sách ID xịn
+  const handleSaveMultiple = async (setId, newWords) => {
+    try {
+      // 1. Chuẩn bị dữ liệu từ vựng (Gắn dấu ấn của Hà vào)
+      const formattedWords = newWords.map(w => ({
+        ...w,
+        userId: currentUser.uid, // <--- Bắt buộc phải có để Rules cho phép lưu
+        level: 1,
+        correctCount: 0,
+        wrongCount: 0,
+        createdAt: new Date().getTime()
+      }));
 
-    // 3. CẬP NHẬT BỘ TỪ (SETS) TRÊN FIREBASE <--- QUAN TRỌNG NHẤT CHỖ NÀY
-    const setRef = doc(db, "sets", setId);
-    const targetSet = sets.find(s => s.id === setId);
-    const updatedWordIds = [...(targetSet.wordIds || []), ...newWordIds];
+      // 2. Lưu từng từ lên mây (bảng vocabularies)
+      const savePromises = formattedWords.map(word => 
+        addDoc(collection(db, "vocabularies"), word)
+      );
+      
+      // Chờ Firebase lưu xong và lấy về các ID thật do Firebase cấp
+      const docRefs = await Promise.all(savePromises);
+      const newWordIds = docRefs.map(ref => ref.id); // Trích xuất mảng ID: ["AQz1...", "7jHk..."]
 
-    await updateDoc(setRef, {
-      wordIds: updatedWordIds
-    });
+      // 3. BƯỚC QUAN TRỌNG: CẬP NHẬT ID VÀO BỘ TỪ (bảng sets)
+      // Tìm bộ từ hiện tại để lấy các từ cũ (nếu có), tránh bị ghi đè mất
+      const targetSet = sets.find(s => s.id === setId);
+      const currentWordIds = targetSet?.wordIds || []; 
+      
+      // Gộp ID từ cũ và ID từ mới lại với nhau
+      const updatedWordIds = [...currentWordIds, ...newWordIds];
 
-    console.log("Đã đồng bộ từ vựng vào bộ từ thành công!");
-    window.location.reload(); // Load lại để nhận data mới nhất
-  } catch (error) {
-    console.error("Lỗi lưu từ vào bộ:", error);
-  }
-};
+      // Gửi lệnh cập nhật mảng wordIds lên bảng "sets"
+      const setRef = doc(db, "sets", setId);
+      await updateDoc(setRef, { 
+        wordIds: updatedWordIds 
+      });
+
+      console.log("Đã lưu từ vựng và đưa vào bộ từ thành công!");
+      window.location.reload(); // Ép load lại trang để hiển thị kết quả mới nhất
+    } catch (error) {
+      console.error("Lỗi khi lưu nhiều từ: ", error);
+      alert("Có lỗi xảy ra khi lưu lên mây, Hà kiểm tra lại Console (F12) nhé!");
+    }
+  };
 
   const handleStartGame = (gameId) => {
     updateStreak();
