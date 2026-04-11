@@ -670,22 +670,37 @@ function ThematicVocabView({ libraries, setLibraries, onClose, onStartCustomGame
   const selectedLibrary = libraries.find(l => l.id === selectedLibraryId);
   const selectedChapter = selectedLibrary?.chapters.find(c => c.id === selectedChapterId);
 
-  const handleToggleChapterWord = (wordId) => {
-    setLibraries(prev => prev.map(lib => {
-      if (lib.id !== selectedLibraryId) return lib;
+  const handleToggleChapterWord = async (wordId) => {
+    // 1. Tìm sách và chương hiện tại để lấy dữ liệu chuẩn
+    const targetLib = libraries.find(l => l.id === selectedLibraryId);
+    if (!targetLib) return;
+
+    // 2. Tạo mảng chapters mới với từ đã được đổi trạng thái
+    const updatedChapters = targetLib.chapters.map(chap => {
+      if (chap.id !== selectedChapterId) return chap;
       return {
-        ...lib,
-        chapters: lib.chapters.map(chap => {
-          if (chap.id !== selectedChapterId) return chap;
-          return {
-            ...chap,
-            words: chap.words.map(w => 
-              w.id === wordId ? { ...w, isMastered: !w.isMastered, level: w.isMastered ? 1 : 5 } : w
-            )
-          };
-        })
+        ...chap,
+        words: chap.words.map(w =>
+          w.id === wordId ? { ...w, isMastered: !w.isMastered, level: w.isMastered ? 1 : 5 } : w
+        )
       };
-    }));
+    });
+
+    // 3. Cập nhật giao diện ngay lập tức cho mượt
+    setLibraries(prev => prev.map(lib =>
+      lib.id === selectedLibraryId ? { ...lib, chapters: updatedChapters } : lib
+    ));
+
+    // 4. BẮT BUỘC: Đẩy lên Firebase để lưu vĩnh viễn
+    try {
+      await updateDoc(doc(db, "libraries", selectedLibraryId), {
+        chapters: updatedChapters
+      });
+      console.log("Đã lưu trạng thái Tick Thuộc vào Sách trên mây!");
+    } catch (error) {
+      console.error("Lỗi khi lưu tick Thuộc: ", error);
+      alert("Lỗi mạng, chưa lưu được trạng thái!");
+    }
   };
 
   // GIAO DIỆN 3: CHI TIẾT UNIT (CHƯƠNG)
@@ -3181,21 +3196,19 @@ if (libData.length > 0) {
       setGameHistory(prev => [{ ...newHistoryRecord, id: docRef.id }, ...prev].slice(0, 15));
 
       // 2. XỬ LÝ LƯU ĐIỂM TỪ VỰNG (Rẽ nhánh)
-      // 2. XỬ LÝ LƯU ĐIỂM TỪ VỰNG (Rẽ nhánh)
       if (gameSource?.type === 'library') {
         // --- TRƯỜNG HỢP: GAME TRONG SÁCH (LỘ TRÌNH HỌC) ---
         const { libraryId, chapterId } = gameSource;
-        
-        // 1. Lấy dữ liệu sách hiện tại
-        const targetLib = libraries.find(l => l.id === libraryId);
-        
-        if (targetLib) {
-          // 2. Tính toán chính xác các từ đã thuộc
+
+        setLibraries(prevLibs => {
+          const targetLib = prevLibs.find(l => l.id === libraryId);
+          if (!targetLib) return prevLibs; // Đề phòng lỗi rỗng
+
+          // 1. Quét qua các câu trả lời đúng và đổi trạng thái thành isMastered
           const chaptersToSave = targetLib.chapters.map(chap => {
             if (chap.id === chapterId) {
               const updatedWords = chap.words.map(w => {
                 const res = sessionResults.find(r => r.word.id === w.id);
-                // Nếu đúng thì đánh dấu thuộc (tick xanh)
                 if (res && res.isCorrect) {
                   return { ...w, isMastered: true, level: 5 };
                 }
@@ -3206,15 +3219,17 @@ if (libData.length > 0) {
             return chap;
           });
 
-          // 3. Cập nhật giao diện (UI) ngay lập tức
-          setLibraries(prevLibs => prevLibs.map(l => 
-            l.id === libraryId ? { ...l, chapters: chaptersToSave } : l
-          ));
+          // 2. Lưu trực tiếp mảng mới này lên Firebase
+          updateDoc(doc(db, "libraries", libraryId), { chapters: chaptersToSave })
+            .then(() => console.log("Đã lưu kết quả Game vào Sách trên mây!"))
+            .catch(error => console.error("Lỗi lưu Game Sách: ", error));
 
-          // 4. LƯU THẲNG LÊN FIREBASE (Không bị trễ nhịp nữa)
-          await updateDoc(doc(db, "libraries", libraryId), { chapters: chaptersToSave });
-          console.log("Đã cập nhật trạng thái Thuộc của Sách lên mây!");
-        }
+          // 3. Cập nhật lại giao diện
+          return prevLibs.map(l =>
+            l.id === libraryId ? { ...l, chapters: chaptersToSave } : l
+          );
+        });
+      }
 
   
       
