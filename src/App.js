@@ -976,7 +976,7 @@ function ThematicVocabView({ libraries, setLibraries, onClose, onStartCustomGame
           <ChevronLeft size={20} /> Trở về
         </button>
       </div>
-      <h2 className={`text-center text-2xl font-black mb-8 uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lộ trình học</h2>
+      <h2 className={`text-center text-2xl font-black mb-8 uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>BỘ SÁCH</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 px-6">
         <div onClick={() => setIsCreating(true)} className={`border-2 border-dashed ${isDarkMode ? 'border-gray-600 hover:border-[#64bc04] bg-[#1e1f29]' : 'border-gray-300 hover:border-[#64bc04] bg-gray-50'} rounded-[24px] p-5 flex flex-col items-center justify-center min-h-[160px] cursor-pointer group transition-all`}>
@@ -3032,6 +3032,22 @@ export default function App() {
             if (historyData.length > 0) {
               setGameHistory(historyData);
             }
+
+            // Tìm đoạn useEffect có onAuthStateChanged và thêm vào dưới Phần 3:
+// --- PHẦN 4: LẤY LỘ TRÌNH SÁCH (LIBRARIES) ---
+const qLibraries = query(
+  collection(db, "libraries"),
+  where("userId", "==", user.uid)
+);
+const libSnapshot = await getDocs(qLibraries);
+const libData = libSnapshot.docs.map(doc => ({
+  ...doc.data(),
+  id: doc.id
+}));
+
+if (libData.length > 0) {
+  setLibraries(libData);
+}
 
             console.log("Đã tải xong TỪ VỰNG, BỘ TỪ và LỊCH SỬ từ mây cho Hà!");
           } catch (error) {
