@@ -3014,16 +3014,20 @@ export default function App() {
             }
 
             // --- PHẦN 3: LẤY LỊCH SỬ GAME (Để F5 không bị mất) ---
+            // --- PHẦN 3: LẤY LỊCH SỬ GAME (Sửa lỗi mất dữ liệu khi F5) ---
             const qHistory = query(
               collection(db, "history"),
-              where("userId", "==", user.uid),
-              orderBy("date", "desc") // Lấy mới nhất lên đầu
+              where("userId", "==", user.uid) // <-- Đã bỏ lệnh orderBy ở đây
             );
             const historySnapshot = await getDocs(qHistory);
+            
+            // Kéo dữ liệu về rồi mới dùng Javascript để sắp xếp
             const historyData = historySnapshot.docs.map(doc => ({
               ...doc.data(),
               id: doc.id
-            })).slice(0, 15); // Chỉ lấy 15 trận gần nhất cho nhẹ
+            }))
+            .sort((a, b) => b.date - a.date) // <-- Sắp xếp ngày mới nhất lên đầu
+            .slice(0, 15); // Chỉ lấy 15 trận
 
             if (historyData.length > 0) {
               setGameHistory(historyData);
