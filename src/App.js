@@ -3080,7 +3080,7 @@ export default function App() {
         if (index !== -1) {
           const word = updatedVocab[index];
           let currentLevel = (!word.nextReview || word.nextReview === 0) ? 0 : (word.level || 1);
-          let newLevel = res.isCorrect ? Math.min(5, currentLevel + 1) : Math.max(1, currentLevel - 1);
+          let newLevel = res.isCorrect ? 5 : Math.max(1, currentLevel - 1);
           const interval = LEVEL_INTERVALS[newLevel] || LEVEL_INTERVALS[1];
           updatedVocab[index] = {
             ...word,
