@@ -900,7 +900,8 @@ function ThematicVocabView({ libraries, setLibraries, onClose, onStartCustomGame
   // GIAO DIỆN 2: CHI TIẾT SÁCH (HIỂN THỊ CÁC UNIT)
   if (selectedLibrary) {
     const totalWords = selectedLibrary.chapters.reduce((sum, chap) => sum + chap.words.length, 0);
-    
+    const totalMastered = selectedLibrary.chapters.reduce((sum, chap) => sum + chap.words.filter(w => w.isMastered).length, 0);
+    const totalProgress = totalWords === 0 ? 0 : Math.round((totalMastered / totalWords) * 100);
     return (
       <div className="w-full animate-in fade-in zoom-in-95 duration-500 pb-12 mt-4 max-w-6xl mx-auto px-4">
         
