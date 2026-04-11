@@ -1599,15 +1599,29 @@ function SummaryScreen({ results, onFinish, onRetry, onNext, onSaveResults, isDa
 
         <div className="mt-4 flex flex-col items-center gap-6">
           {!isSaved ? (
-            <button 
-              onClick={() => {
-                setIsSaved(true);
-                if (onSaveResults) onSaveResults(results);
-              }} 
-              className="bg-[#64bc04] hover:bg-[#74d404] text-white font-black py-4 px-14 rounded-full text-xl shadow-xl active:scale-95 transition-all flex items-center gap-3 animate-pulse"
-            >
-              <Check size={24} /> 💾 Lưu & Hoàn thành
-            </button>
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
+              {/* NÚT KHÔNG LƯU */}
+              <button 
+                onClick={() => {
+                  setIsSaved(true);
+                  // Chỉ đổi trạng thái để hiện nút chuyển bài, KHÔNG gọi onSaveResults
+                }} 
+                className={`${isDarkMode ? 'bg-[#2a2c38] hover:bg-[#3e414d]' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'} text-white font-black py-4 px-8 rounded-full text-lg shadow-xl active:scale-95 transition-all flex items-center gap-3`}
+              >
+                <X size={24} /> Không lưu
+              </button>
+
+              {/* NÚT LƯU KẾT QUẢ */}
+              <button 
+                onClick={() => {
+                  setIsSaved(true);
+                  if (onSaveResults) onSaveResults(results);
+                }} 
+                className="bg-[#64bc04] hover:bg-[#74d404] text-white font-black py-4 px-10 rounded-full text-lg shadow-xl active:scale-95 transition-all flex items-center gap-3 animate-pulse"
+              >
+                <Check size={24} /> 💾 Lưu kết quả
+              </button>
+            </div>
           ) : (
             <div className="flex flex-wrap justify-center items-center gap-4 animate-in slide-in-from-bottom-4">
                {wrong.length > 0 && (
@@ -2969,7 +2983,7 @@ export default function App() {
           setIsLoggedIn(true);
 
           try {
-            // --- PHẦN 1: LẤY TỪ VỰNG (Giống code cũ của Hà) ---
+            // --- PHẦN 1: LẤY TỪ VỰNG ---
             const qVocab = query(
               collection(db, "vocabularies"),
               where("userId", "==", user.uid)
@@ -2984,7 +2998,7 @@ export default function App() {
               setVocab(vocabData);
             }
 
-            // --- PHẦN 2: LẤY BỘ TỪ (Đây là phần code MỚI được thêm vào) ---
+            // --- PHẦN 2: LẤY BỘ TỪ ---
             const qSets = query(
               collection(db, "sets"),
               where("userId", "==", user.uid)
@@ -2999,24 +3013,41 @@ export default function App() {
               setSets(setsData);
             }
 
-            console.log("Đã tải xong CẢ TỪ VỰNG VÀ BỘ TỪ từ mây cho Hà!");
+            // --- PHẦN 3: LẤY LỊCH SỬ GAME (Để F5 không bị mất) ---
+            const qHistory = query(
+              collection(db, "history"),
+              where("userId", "==", user.uid),
+              orderBy("date", "desc") // Lấy mới nhất lên đầu
+            );
+            const historySnapshot = await getDocs(qHistory);
+            const historyData = historySnapshot.docs.map(doc => ({
+              ...doc.data(),
+              id: doc.id
+            })).slice(0, 15); // Chỉ lấy 15 trận gần nhất cho nhẹ
+
+            if (historyData.length > 0) {
+              setGameHistory(historyData);
+            }
+
+            console.log("Đã tải xong TỪ VỰNG, BỘ TỪ và LỊCH SỬ từ mây cho Hà!");
           } catch (error) {
             console.error("Lỗi lấy dữ liệu: ", error);
           }
 
           setIsCheckingAuth(false);
         } else {
+          // --- KHI ĐĂNG XUẤT: Dọn dẹp data cũ ---
           setCurrentUser(null);
           setIsLoggedIn(false);
           setVocab(INITIAL_VOCAB);
-          setSets(INITIAL_SETS); // Thêm dòng này để xóa bộ từ khi đăng xuất
+          setSets(INITIAL_SETS); 
+          setGameHistory([]); // <-- Nhớ thêm dòng này để xóa lịch sử cũ
           setIsCheckingAuth(false);
         }
       });
       return () => unsubscribe();
     }
   }, []);
-
 
   // <-- THÊM HÀM ĐĂNG XUẤT NÀY VÀO -->
   const handleLogout = () => {
@@ -3072,37 +3103,70 @@ export default function App() {
     setVocab(vocab.map(w => w.id === id ? { ...w, level: w.level === 5 ? 1 : 5, nextReview: w.level === 5 ? 0 : Date.now() + LEVEL_INTERVALS[5] } : w));
   };
 
-  const handleSaveGameResults = (sessionResults) => {
-    setVocab(prevVocab => {
-      const updatedVocab = [...prevVocab];
-      sessionResults.forEach(res => {
-        const index = updatedVocab.findIndex(w => w.id === res.word.id);
-        if (index !== -1) {
-          const word = updatedVocab[index];
-          let currentLevel = (!word.nextReview || word.nextReview === 0) ? 0 : (word.level || 1);
-          let newLevel = res.isCorrect ? 5 : Math.max(1, currentLevel - 1);
+  const handleSaveGameResults = async (sessionResults) => {
+    try {
+      // 1. CẬP NHẬT TỪ VỰNG LÊN FIREBASE (Nhảy thẳng lên level 5 nếu đúng)
+      const updatePromises = sessionResults.map(res => {
+        const word = vocab.find(w => w.id === res.word.id);
+        if (word) {
+          let newLevel = res.isCorrect ? 5 : Math.max(1, (word.level || 1) - 1);
           const interval = LEVEL_INTERVALS[newLevel] || LEVEL_INTERVALS[1];
-          updatedVocab[index] = {
-            ...word,
+
+          return updateDoc(doc(db, "vocabularies", word.id), {
             level: newLevel,
             nextReview: Date.now() + interval,
             correctCount: res.isCorrect ? (word.correctCount || 0) + 1 : (word.correctCount || 0),
-            wrongCount: !res.isCorrect ? (word.wrongCount || 0) + 1 : (word.wrongCount || 0),
-          };
+            wrongCount: !res.isCorrect ? (word.wrongCount || 0) + 1 : (word.wrongCount || 0)
+          });
         }
-      });
-      return updatedVocab;
-    });
+        return null;
+      }).filter(p => p !== null);
 
-    const correctCount = sessionResults.filter(r => r.isCorrect).length;
-    const accuracy = Math.round((correctCount / Math.max(1, sessionResults.length)) * 100);
-    
-    setGameHistory(prev => [{
-      id: Date.now().toString(),
-      gameId: currentGame === 'srs' ? 'srs' : currentGame,
-      date: Date.now(),
-      accuracy: accuracy
-    }, ...prev].slice(0, 15));
+      await Promise.all(updatePromises);
+
+      // 2. LƯU LỊCH SỬ GAME LÊN FIREBASE
+      const correctCount = sessionResults.filter(r => r.isCorrect).length;
+      const accuracy = Math.round((correctCount / Math.max(1, sessionResults.length)) * 100);
+      
+      const newHistoryRecord = {
+        userId: currentUser.uid, // Cần có userId để bảo mật
+        gameId: currentGame === 'srs' ? 'srs' : currentGame,
+        date: Date.now(),
+        accuracy: accuracy
+      };
+
+      // Thêm vào bảng 'history' trên Firebase
+      const docRef = await addDoc(collection(db, "history"), newHistoryRecord);
+      const historyWithId = { ...newHistoryRecord, id: docRef.id };
+
+      // 3. CẬP NHẬT GIAO DIỆN HIỂN THỊ
+      setVocab(prevVocab => {
+        const updatedVocab = [...prevVocab];
+        sessionResults.forEach(res => {
+          const index = updatedVocab.findIndex(w => w.id === res.word.id);
+          if (index !== -1) {
+            const word = updatedVocab[index];
+            let newLevel = res.isCorrect ? 5 : Math.max(1, (word.level || 1) - 1);
+            const interval = LEVEL_INTERVALS[newLevel] || LEVEL_INTERVALS[1];
+            updatedVocab[index] = {
+              ...word,
+              level: newLevel,
+              nextReview: Date.now() + interval,
+              correctCount: res.isCorrect ? (word.correctCount || 0) + 1 : (word.correctCount || 0),
+              wrongCount: !res.isCorrect ? (word.wrongCount || 0) + 1 : (word.wrongCount || 0),
+            };
+          }
+        });
+        return updatedVocab;
+      });
+
+      setGameHistory(prev => [historyWithId, ...prev].slice(0, 15));
+      console.log("Đã đồng bộ từ vựng và lịch sử lên Firebase!");
+
+    } catch (e) {
+      console.error("Lỗi đồng bộ lên mây: ", e);
+      alert("Chưa lưu được lên đám mây, hãy kiểm tra mạng nhé!");
+    }
   };
 
   // --- HÀM XỬ LÝ DỮ LIỆU TRÊN CLOUD (THAY THẾ CỤM CŨ CỦA HÀ) ---
