@@ -964,38 +964,47 @@ function ThematicVocabView({ libraries, setLibraries, onClose, onStartCustomGame
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {selectedLibrary.chapters.map((chap, i) => (
-            <div key={chap.id} onClick={() => setSelectedChapterId(chap.id)} className={`group ${isDarkMode ? 'bg-[#252733] border-[#3e414d] hover:border-indigo-500/50' : 'bg-white border-gray-200 shadow-md hover:border-indigo-400'} border rounded-[24px] p-5 flex flex-col transition-all duration-300 cursor-pointer relative overflow-hidden`}>
-              
-              <div className="flex items-start gap-4 mb-4">
-                <div className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg shadow-inner ${isDarkMode ? 'bg-[#3e414d] text-white' : 'bg-gray-100 text-gray-700'}`}>
-                  {i + 1}
-                </div>
-                <div className="flex-1 min-w-0 mt-1">
-                  <h4 className={`font-black text-base leading-tight truncate ${isDarkMode ? 'text-white group-hover:text-indigo-400' : 'text-gray-900 group-hover:text-indigo-600'} transition-colors mb-1.5`}>
-                    {chap.title}
-                  </h4>
-                  <div className="text-xs font-bold text-gray-500">{chap.words.length} từ</div>
-                </div>
-              </div>
+          {selectedLibrary.chapters.map((chap, i) => {
+            // --- TÍNH TOÁN PHẦN TRĂM CỦA TỪNG UNIT TẠI ĐÂY ---
+            const chapTotal = chap.words.length;
+            const chapMastered = chap.words.filter(w => w.isMastered).length;
+            const chapProgress = chapTotal === 0 ? 0 : Math.round((chapMastered / chapTotal) * 100);
 
-              <div className="mt-auto flex items-end justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1.5">
-                    <span>Tiến độ</span>
-                    <span className="text-[#64bc04]">0%</span>
+            return (
+              <div key={chap.id} onClick={() => setSelectedChapterId(chap.id)} className={`group ${isDarkMode ? 'bg-[#252733] border-[#3e414d] hover:border-indigo-500/50' : 'bg-white border-gray-200 shadow-md hover:border-indigo-400'} border rounded-[24px] p-5 flex flex-col transition-all duration-300 cursor-pointer relative overflow-hidden`}>
+                
+                <div className="flex items-start gap-4 mb-4">
+                  <div className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black text-lg shadow-inner ${isDarkMode ? 'bg-[#3e414d] text-white' : 'bg-gray-100 text-gray-700'}`}>
+                    {i + 1}
                   </div>
-                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-[#181a20]' : 'bg-gray-100'}`}>
-                    <div className="h-full bg-[#64bc04] rounded-full w-[0%]"></div>
+                  <div className="flex-1 min-w-0 mt-1">
+                    <h4 className={`font-black text-base leading-tight truncate ${isDarkMode ? 'text-white group-hover:text-indigo-400' : 'text-gray-900 group-hover:text-indigo-600'} transition-colors mb-1.5`}>
+                      {chap.title}
+                    </h4>
+                    <div className="text-xs font-bold text-gray-500">{chapTotal} từ</div>
                   </div>
                 </div>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDarkMode ? 'bg-[#181a20] group-hover:bg-indigo-500 text-gray-500 group-hover:text-white' : 'bg-gray-100 group-hover:bg-indigo-600 text-gray-400 group-hover:text-white'}`}>
-                  <Play size={14} fill="currentColor" className="ml-0.5" />
-                </div>
-              </div>
 
-            </div>
-          ))}
+                <div className="mt-auto flex items-end justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1.5">
+                      <span>Tiến độ</span>
+                      {/* ĐÃ THAY SỐ 0% BẰNG BIẾN chapProgress */}
+                      <span className="text-[#64bc04]">{chapProgress}%</span>
+                    </div>
+                    <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-[#181a20]' : 'bg-gray-100'}`}>
+                      {/* ĐÃ THAY w-[0%] BẰNG style={{ width: ... }} ĐỂ THANH CHẠY */}
+                      <div className="h-full bg-[#64bc04] rounded-full transition-all duration-1000" style={{ width: `${chapProgress}%` }}></div>
+                    </div>
+                  </div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDarkMode ? 'bg-[#181a20] group-hover:bg-indigo-500 text-gray-500 group-hover:text-white' : 'bg-gray-100 group-hover:bg-indigo-600 text-gray-400 group-hover:text-white'}`}>
+                    <Play size={14} fill="currentColor" className="ml-0.5" />
+                  </div>
+                </div>
+
+              </div>
+            );
+          })}
         </div>
       </div>
     );
