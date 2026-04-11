@@ -3099,8 +3099,30 @@ export default function App() {
   const [isSRSModalOpen, setIsSRSModalOpen] = useState(false);
   const [customSessionWords, setCustomSessionWords] = useState(null);
 
-  const handleToggleMastered = (id) => {
-    setVocab(vocab.map(w => w.id === id ? { ...w, level: w.level === 5 ? 1 : 5, nextReview: w.level === 5 ? 0 : Date.now() + LEVEL_INTERVALS[5] } : w));
+  const handleToggleMastered = async (id) => {
+    // 1. Tìm từ vựng đang được click
+    const wordToUpdate = vocab.find(w => w.id === id);
+    if (!wordToUpdate) return;
+
+    // 2. Xác định trạng thái mới
+    const isCurrentlyMastered = wordToUpdate.level === 5;
+    const newLevel = isCurrentlyMastered ? 1 : 5;
+    const newNextReview = isCurrentlyMastered ? 0 : Date.now() + LEVEL_INTERVALS[5];
+
+    // 3. Cập nhật UI ngay lập tức để không bị giật lag
+    setVocab(prev => prev.map(w => 
+      w.id === id ? { ...w, level: newLevel, nextReview: newNextReview } : w
+    ));
+
+    // 4. Lặng lẽ lưu thay đổi lên đám mây (Firebase)
+    try {
+      await updateDoc(doc(db, "vocabularies", id), {
+        level: newLevel,
+        nextReview: newNextReview
+      });
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái Thuộc: ", error);
+    }
   };
 
   const handleSaveGameResults = async (sessionResults) => {
