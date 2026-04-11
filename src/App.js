@@ -4,7 +4,7 @@ import { initializeApp,getApp, getApps } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { db } from './firebase'; 
-import { collection, addDoc, getDocs, onSnapshot, query, orderBy,deleteDoc, doc,updateDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, onSnapshot, query, orderBy,deleteDoc, doc,updateDoc,where } from "firebase/firestore";
 
 // --- TỰ ĐỊNH NGHĨA ICON (Hà giữ nguyên phần này) ---
 const createIcon = (paths) => {
@@ -2966,7 +2966,7 @@ useEffect(() => {
 
           // --- ĐOẠN NÀY LÀ MẤU CHỐT: Lấy dữ liệu từ Firestore về ---
           try {
-            const q = query(collection(db, "vocabularies")); // "vocabularies" là tên bảng ông tạo
+            const q = query(collection(db, "vocabularies"),where("userId", "==", user.uid)); // "vocabularies" là tên bảng ông tạo
             const querySnapshot = await getDocs(q);
             const data = querySnapshot.docs.map(doc => ({
   ...doc.data(),
@@ -3133,6 +3133,7 @@ useEffect(() => {
       const formattedWords = newWords.map(w => ({
         ...w, 
         
+        userId: currentUser.uid,
         level: 1, 
         correctCount: 0, 
         wrongCount: 0,
