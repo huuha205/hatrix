@@ -3128,38 +3128,35 @@ useEffect(() => {
   };
 
  const handleSaveMultiple = async (setId, newWords) => {
-    try {
-      // 1. Chuẩn bị dữ liệu và thêm createdAt để sau này sắp xếp từ mới lên đầu
-      const formattedWords = newWords.map(w => ({
-        ...w, 
-        
-        userId: currentUser.uid,
-        level: 1, 
-        correctCount: 0, 
-        wrongCount: 0,
-        createdAt: new Date().getTime() // Thêm mốc thời gian để lưu
-      }));
+  try {
+    // 1. Gắn userId và chuẩn bị dữ liệu từ vựng
+    const formattedWords = newWords.map(w => ({
+      ...w,
+      userId: currentUser.uid,
+      level: 1,
+      createdAt: new Date().getTime()
+    }));
 
-      // 2. LƯU LÊN FIREBASE (Singapore)
-      // Chúng ta dùng vòng lặp để đẩy từng từ trong danh sách mới vào collection "vocabularies"
-      const savePromises = formattedWords.map(word => 
-        addDoc(collection(db, "vocabularies"), word)
-      );
-      await Promise.all(savePromises); 
+    // 2. Lưu từng từ lên Firestore và lấy về các ID thật do Firebase cấp
+    const savePromises = formattedWords.map(word => addDoc(collection(db, "vocabularies"), word));
+    const docRefs = await Promise.all(savePromises);
+    const newWordIds = docRefs.map(ref => ref.id); // Đây là danh sách ID xịn
 
-      // 3. Cập nhật giao diện (State) như cũ để người dùng thấy ngay kết quả
-      setVocab([...vocab, ...formattedWords]);
-      setSets(sets.map(s => s.id === setId ? {
-        ...s, 
-        wordIds: [...s.wordIds, ...formattedWords.map(w => w.id)]
-      } : s));
+    // 3. CẬP NHẬT BỘ TỪ (SETS) TRÊN FIREBASE <--- QUAN TRỌNG NHẤT CHỖ NÀY
+    const setRef = doc(db, "sets", setId);
+    const targetSet = sets.find(s => s.id === setId);
+    const updatedWordIds = [...(targetSet.wordIds || []), ...newWordIds];
 
-      console.log("Đã lưu thành công " + newWords.length + " từ lên Firebase!");
-    } catch (error) {
-      console.error("Lỗi khi lưu nhiều từ: ", error);
-      alert("Có lỗi khi lưu lên mây, Hà kiểm tra lại nhé!");
-    }
-  };
+    await updateDoc(setRef, {
+      wordIds: updatedWordIds
+    });
+
+    console.log("Đã đồng bộ từ vựng vào bộ từ thành công!");
+    window.location.reload(); // Load lại để nhận data mới nhất
+  } catch (error) {
+    console.error("Lỗi lưu từ vào bộ:", error);
+  }
+};
 
   const handleStartGame = (gameId) => {
     updateStreak();
