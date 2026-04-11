@@ -3027,7 +3027,7 @@ export default function App() {
               id: doc.id
             }))
             .sort((a, b) => b.date - a.date) // <-- Sắp xếp ngày mới nhất lên đầu
-            .slice(0, 15); // Chỉ lấy 15 trận
+            .slice(0, 10); // Chỉ lấy 15 trận
 
             if (historyData.length > 0) {
               setGameHistory(historyData);
