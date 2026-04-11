@@ -3181,38 +3181,44 @@ if (libData.length > 0) {
       setGameHistory(prev => [{ ...newHistoryRecord, id: docRef.id }, ...prev].slice(0, 15));
 
       // 2. XỬ LÝ LƯU ĐIỂM TỪ VỰNG (Rẽ nhánh)
+      // 2. XỬ LÝ LƯU ĐIỂM TỪ VỰNG (Rẽ nhánh)
       if (gameSource?.type === 'library') {
         // --- TRƯỜNG HỢP: GAME TRONG SÁCH (LỘ TRÌNH HỌC) ---
         const { libraryId, chapterId } = gameSource;
-        let chaptersToSave = null;
-
-        setLibraries(prevLibs => {
-          return prevLibs.map(lib => {
-            if (lib.id === libraryId) {
-              const updatedChapters = lib.chapters.map(chap => {
-                if (chap.id === chapterId) {
-                  const updatedWords = chap.words.map(w => {
-                    const res = sessionResults.find(r => r.word.id === w.id);
-                    // Nếu đúng thì gán level 5 và tick xanh (isMastered)
-                    if (res && res.isCorrect) return { ...w, isMastered: true, level: 5 };
-                    return w;
-                  });
-                  return { ...chap, words: updatedWords };
+        
+        // 1. Lấy dữ liệu sách hiện tại
+        const targetLib = libraries.find(l => l.id === libraryId);
+        
+        if (targetLib) {
+          // 2. Tính toán chính xác các từ đã thuộc
+          const chaptersToSave = targetLib.chapters.map(chap => {
+            if (chap.id === chapterId) {
+              const updatedWords = chap.words.map(w => {
+                const res = sessionResults.find(r => r.word.id === w.id);
+                // Nếu đúng thì đánh dấu thuộc (tick xanh)
+                if (res && res.isCorrect) {
+                  return { ...w, isMastered: true, level: 5 };
                 }
-                return chap;
+                return w;
               });
-              chaptersToSave = updatedChapters; 
-              return { ...lib, chapters: updatedChapters };
+              return { ...chap, words: updatedWords };
             }
-            return lib;
+            return chap;
           });
-        });
 
-        if (chaptersToSave) {
+          // 3. Cập nhật giao diện (UI) ngay lập tức
+          setLibraries(prevLibs => prevLibs.map(l => 
+            l.id === libraryId ? { ...l, chapters: chaptersToSave } : l
+          ));
+
+          // 4. LƯU THẲNG LÊN FIREBASE (Không bị trễ nhịp nữa)
           await updateDoc(doc(db, "libraries", libraryId), { chapters: chaptersToSave });
+          console.log("Đã cập nhật trạng thái Thuộc của Sách lên mây!");
         }
 
-      } else {
+  
+      
+      else {
         // --- TRƯỜNG HỢP: GAME TỪ VỰNG CHUNG (Dưới local của Hà) ---
         const updatePromises = sessionResults.map(res => {
           const word = vocab.find(w => w.id === res.word.id);
