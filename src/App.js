@@ -640,9 +640,26 @@ function ThematicVocabView({ libraries, setLibraries, onClose, onStartCustomGame
     return 'bg-[#ef4444]'; 
   };
 
-  const handleSaveNewLibrary = (newLib) => {
-    setLibraries([newLib, ...libraries]);
-    setIsCreating(false);
+  const handleSaveNewLibrary = async (newLib) => {
+    try {
+      // 1. Thêm thông tin chủ nhân cuốn sách
+      const libWithUser = {
+        ...newLib,
+        userId: currentUser.uid, // <-- Dùng currentUser thay vì auth.currentUser cho chắc chắn
+        createdAt: Date.now()
+      };
+      
+      // 2. Đẩy lên mây (bảng libraries)
+      const docRef = await addDoc(collection(db, "libraries"), libWithUser);
+      
+      // 3. Cập nhật giao diện với ID thật từ mây trả về
+      setLibraries([{ ...libWithUser, id: docRef.id }, ...libraries]);
+      setIsCreating(false);
+      console.log("Đã lưu lộ trình sách lên mây!");
+    } catch (e) {
+      console.error("Lỗi lưu sách:", e);
+      alert("Lỗi khi lưu sách! Hà mở F12 xem chi tiết nhé.");
+    }
   };
 
   const handleDeleteLibrary = (e, id) => {
