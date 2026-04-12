@@ -2190,6 +2190,17 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
     }
   };
 
+  useEffect(() => {
+    if (timer === 0 && !showFeedback && !showSummary) {
+      if (activeGameType === 'matching') {
+        setShowSummary(true); // Game nối từ: Hết giờ là kết thúc luôn
+      } else {
+        handleAnswer(false); // Các game khác: Báo sai và hiện bảng đáp án
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer, showFeedback, showSummary, activeGameType]);
+
   const handleAdvance = () => {
     setShowFeedback(false);
     if (results.filter(r => r.isCorrect).length >= currentSessionWords.length) { 
