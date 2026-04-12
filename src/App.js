@@ -1282,7 +1282,7 @@ function GamesTab({ vocab, sets, onStartCustomGame, onOpenSRS, history, isDarkMo
   const [statusFilter, setStatusFilter] = useState('unmastered');
   const [orderMode, setOrderMode] = useState('random');
   const [wordCount, setWordCount] = useState('20');
-
+const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
   const availableWords = useMemo(() => {
       let list = [...vocab];
       if (selectedSet !== 'all') {
@@ -1417,45 +1417,62 @@ function GamesTab({ vocab, sets, onStartCustomGame, onOpenSRS, history, isDarkMo
       </div>
 
       {/* --- LỊCH SỬ ĐẤU --- */}
-      <div className={`border-2 ${isDarkMode ? 'border-purple-500/40 bg-[#181a20]/40' : 'border-purple-200 bg-white shadow-xl'} rounded-[32px] p-6 shadow-[0_0_30px_rgba(168,85,247,0.05)] mt-8`}>
-        <div className="flex justify-between items-center mb-6">
+      <div className={`border-2 ${isDarkMode ? 'border-purple-500/40 bg-[#181a20]/40' : 'border-purple-200 bg-white shadow-xl'} rounded-[32px] p-6 shadow-[0_0_30px_rgba(168,85,247,0.05)] mt-8 transition-all duration-300`}>
+        
+        {/* Phần Header có thể Click để đóng/mở */}
+        <div 
+          onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+          className="flex justify-between items-center cursor-pointer group"
+        >
           <div className="flex items-center gap-3">
-            <div className="bg-purple-400/20 p-2.5 rounded-full text-purple-400">
+            <div className="bg-purple-400/20 p-2.5 rounded-full text-purple-400 group-hover:scale-110 transition-transform">
               <Calendar size={20} strokeWidth={2.5}/>
             </div>
-            <h3 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-black text-xl tracking-tight`}>Lịch sử đấu</h3>
+            <h3 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-black text-xl tracking-tight group-hover:text-purple-400 transition-colors`}>
+              Lịch sử đấu
+            </h3>
           </div>
-          <button className="text-gray-400 hover:text-indigo-600 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors">
-            <PieChart size={16}/> Xem thống kê
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-indigo-600 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors">
+              <PieChart size={16}/> Xem thống kê
+            </button>
+            
+            {/* Icon mũi tên xoay lật */}
+            <button className={`text-gray-400 group-hover:text-purple-500 transition-all duration-300 ${isHistoryExpanded ? 'rotate-180' : ''}`}>
+              <ChevronDown size={20} strokeWidth={3} />
+            </button>
+          </div>
         </div>
         
-        <div className="flex flex-col gap-4">
-          {history.length === 0 ? (
-            <div className="text-center text-gray-500 py-8 font-medium">Chưa có lịch sử. Bắt đầu luyện tập ngay nhé!</div>
-          ) : (
-            history.map(item => {
-              const info = GAME_INFO[item.gameId] || GAME_INFO['quiz'];
-              return (
-                <div key={item.id} className={`${isDarkMode ? 'bg-[#1e1f29] border-white/10' : 'bg-gray-50 border-gray-100 shadow-sm'} border rounded-full p-3 pr-8 flex items-center justify-between hover:border-purple-500/50 transition-all group`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${info.color} shadow-inner`}>
-                      <info.icon size={20} strokeWidth={3} />
+        {/* Phần Nội dung (Sẽ ẩn/hiện kèm hiệu ứng mượt) */}
+        {isHistoryExpanded && (
+          <div className="flex flex-col gap-4 mt-6 animate-in slide-in-from-top-4 fade-in duration-300">
+            {history.length === 0 ? (
+              <div className="text-center text-gray-500 py-8 font-medium">Chưa có lịch sử. Bắt đầu luyện tập ngay nhé!</div>
+            ) : (
+              history.map(item => {
+                const info = GAME_INFO[item.gameId] || GAME_INFO['quiz'];
+                return (
+                  <div key={item.id} className={`${isDarkMode ? 'bg-[#1e1f29] border-white/10' : 'bg-gray-50 border-gray-100 shadow-sm'} border rounded-full p-3 pr-8 flex items-center justify-between hover:border-purple-500/50 transition-all group`}>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${info.color} shadow-inner`}>
+                        <info.icon size={20} strokeWidth={3} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-black text-base tracking-tight group-hover:text-purple-400 transition-colors`}>{info.name}</span>
+                        <span className="text-gray-500 text-[11px] font-medium tracking-widest mt-0.5">{formatHistoryDate(item.date)}</span>
+                      </div>
                     </div>
-                    <div className="flex flex-col">
-                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-black text-base tracking-tight group-hover:text-purple-400 transition-colors`}>{info.name}</span>
-                      <span className="text-gray-500 text-[11px] font-medium tracking-widest mt-0.5">{formatHistoryDate(item.date)}</span>
+                    <div className="flex flex-col items-end justify-center">
+                      <span className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em] mb-1">Độ chính xác</span>
+                      <span className={`text-xl font-black tracking-tighter leading-none ${item.accuracy >= 50 ? 'text-green-500' : 'text-red-500'}`}>{item.accuracy}%</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end justify-center">
-                    <span className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em] mb-1">Độ chính xác</span>
-                    <span className={`text-xl font-black tracking-tighter leading-none ${item.accuracy >= 50 ? 'text-green-500' : 'text-red-500'}`}>{item.accuracy}%</span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
     </div>
@@ -3230,7 +3247,7 @@ if (libData.length > 0) {
       };
 
       const docRef = await addDoc(collection(db, "history"), newHistoryRecord);
-      setGameHistory(prev => [{ ...newHistoryRecord, id: docRef.id }, ...prev].slice(0, 15));
+      setGameHistory(prev => [{ ...newHistoryRecord, id: docRef.id }, ...prev].slice(0, 1));
 
       // 2. XỬ LÝ LƯU ĐIỂM TỪ VỰNG (Rẽ nhánh)
       if (gameSource?.type === 'library') {
