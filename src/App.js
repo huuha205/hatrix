@@ -206,45 +206,51 @@ function playAudio(text) {
 
 function playFeedbackSound(isCorrect) {
   try {
-    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const context = new AudioContext();
+    
+    // Mở khóa AudioContext (Rất quan trọng cho Safari/Điện thoại)
+    if (context.state === 'suspended') {
+      context.resume();
+    }
+
     const t = context.currentTime;
 
     if (isCorrect) {
-      // Âm thanh ĐÚNG (Duolingo style) - Đánh 2 nốt liên tiếp: Si (B4) lên Mi (E5)
+      // Âm thanh ĐÚNG (Ting Ting)
       const frequencies = [493.88, 659.25]; 
       
       frequencies.forEach((freq, index) => {
         const osc = context.createOscillator();
         const gain = context.createGain();
         
-        osc.type = 'sine'; // Sóng hình sin cho âm thanh trong trẻo như tiếng chuông
+        osc.type = 'sine'; 
         osc.frequency.value = freq;
         
-        // Độ trễ giữa 2 nốt nhạc là 0.12 giây
         const startTime = t + (index * 0.12); 
         
         gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(0.4, startTime + 0.02); // Tăng âm lượng nhanh
-        gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.5); // Ngân vang rồi tắt dần
+        gain.gain.linearRampToValueAtTime(0.4, startTime + 0.02); 
+        gain.gain.linearRampToValueAtTime(0, startTime + 0.4); // Dùng linear cho an toàn
 
         osc.connect(gain);
         gain.connect(context.destination);
         osc.start(startTime);
-        osc.stop(startTime + 0.5);
+        osc.stop(startTime + 0.4);
       });
 
     } else {
-      // Âm thanh SAI (Bonk) - Trầm và vuốt mũi tên xuống
+      // Âm thanh SAI (Đanh và to hơn)
       const osc = context.createOscillator();
       const gain = context.createGain();
       
-      osc.type = 'triangle'; // Sóng tam giác cho âm thanh hơi đục và buồn
-      osc.frequency.setValueAtTime(250, t); // Bắt đầu ở âm trầm
-      osc.frequency.exponentialRampToValueAtTime(80, t + 0.3); // Vuốt tuột xuống 80Hz
+      osc.type = 'sawtooth'; // Đổi sang sóng răng cưa để loa ngoài nghe rõ
+      osc.frequency.setValueAtTime(300, t); // Tăng tần số lên mức dễ nghe
+      osc.frequency.exponentialRampToValueAtTime(100, t + 0.3); // Vuốt xuống
 
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.3, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+      gain.gain.linearRampToValueAtTime(0.5, t + 0.02); // Tăng âm lượng to hơn (0.5)
+      gain.gain.linearRampToValueAtTime(0, t + 0.3); // Giảm thẳng về 0
 
       osc.connect(gain);
       gain.connect(context.destination);
@@ -252,7 +258,7 @@ function playFeedbackSound(isCorrect) {
       osc.stop(t + 0.3);
     }
   } catch (e) {
-    console.log("Trình duyệt không hỗ trợ Web Audio API");
+    console.log("Lỗi âm thanh:", e);
   }
 }
 
