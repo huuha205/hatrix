@@ -1076,7 +1076,25 @@ function ThematicVocabView({ libraries, setLibraries, onClose, onStartCustomGame
             <p className="text-gray-500 text-sm font-medium mb-8 px-4">Toàn bộ chương và từ vựng bên trong lộ trình này sẽ bị xóa vĩnh viễn và không thể khôi phục.</p>
             <div className="flex items-center gap-4 w-full">
               <button onClick={() => setDeletingLibId(null)} className={`flex-1 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs transition-colors ${isDarkMode ? 'bg-[#252733] text-gray-300 hover:bg-[#3e414d]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Hủy Bỏ</button>
-              <button onClick={() => { setLibraries(prev => prev.filter(l => l.id !== deletingLibId)); setDeletingLibId(null); }} className="flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs text-white bg-red-500 hover:bg-red-600 transition-all shadow-lg shadow-red-500/30 active:scale-95">Xóa Ngay</button>
+<button 
+                onClick={async () => { 
+                  try {
+                    // 1. GỌI LÊN FIREBASE ĐỂ XÓA TẬN GỐC
+                    await deleteDoc(doc(db, "libraries", deletingLibId));
+                    
+                    // 2. XÓA TRÊN GIAO DIỆN VÀ ĐÓNG BẢNG
+                    setLibraries(prev => prev.filter(l => l.id !== deletingLibId)); 
+                    setDeletingLibId(null); 
+                    
+                  } catch (error) {
+                    console.error("Lỗi xóa bộ sách:", error);
+                    alert("Lỗi mạng, chưa thể xóa bộ sách này!");
+                  }
+                }} 
+                className="flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs text-white bg-red-500 hover:bg-red-600 transition-all shadow-lg shadow-red-500/30 active:scale-95"
+              >
+                Xóa Ngay
+              </button>
             </div>
           </div>
         </div>
@@ -3124,25 +3142,41 @@ if (libData.length > 0) {
 
   const updateStreak = () => {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    // 1. Ép thời gian hiện tại về chuẩn 0h:00:00 của hôm nay
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     
     if (!lastStudyDate) {
       setStreak(1);
-      setLastStudyDate(today);
+      setLastStudyDate(todayMidnight);
       return;
     }
 
-    const lastDate = new Date(lastStudyDate).getTime();
-    const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+    const last = new Date(lastStudyDate);
+    // 2. Ép thời gian học lần cuối về chuẩn 0h:00:00 của ngày hôm đó
+    const lastMidnight = new Date(last.getFullYear(), last.getMonth(), last.getDate()).getTime();
+
+    // 3. Dùng Math.round để tính số ngày (Tránh sai số giờ giấc)
+    const diffDays = Math.round((todayMidnight - lastMidnight) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 1) {
-      setStreak(prev => prev + 1);
-      setLastStudyDate(today);
+      setStreak(prev => prev + 1); // Tiếp tục chuỗi
+      setLastStudyDate(todayMidnight);
     } else if (diffDays > 1) {
-      setStreak(1);
-      setLastStudyDate(today);
+      setStreak(1); // Gãy chuỗi, bắt đầu lại
+      setLastStudyDate(todayMidnight);
     }
   };
+
+  const handleSimulateNextDay = () => {
+    setLastStudyDate(prev => {
+      const now = new Date();
+      // Giả lập: Ép mốc thời gian về chính xác 0h:00:00 của "Hôm qua"
+      const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      return yesterday.getTime();
+    });
+    console.log("Đã lùi mốc thời gian học cuối về 0h00 hôm qua!");
+  };
+
 
   const handleSimulateNextDay = () => {
     setLastStudyDate(prev => {
