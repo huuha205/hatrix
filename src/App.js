@@ -207,31 +207,55 @@ function playAudio(text) {
 function playFeedbackSound(isCorrect) {
   try {
     const context = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = context.createOscillator();
-    const gainNode = context.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(context.destination);
-    
-   if (isCorrect) {
-      // Tiếng "Ting" cao và trong (giống Duolingo)
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(523.25, context.currentTime); // Nốt C5
-      oscillator.frequency.exponentialRampToValueAtTime(1046.50, context.currentTime + 0.1); // Lên C6
-      gainNode.gain.setValueAtTime(0.2, context.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.4);
+    const t = context.currentTime;
+
+    if (isCorrect) {
+      // Âm thanh ĐÚNG (Duolingo style) - Đánh 2 nốt liên tiếp: Si (B4) lên Mi (E5)
+      const frequencies = [493.88, 659.25]; 
+      
+      frequencies.forEach((freq, index) => {
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        
+        osc.type = 'sine'; // Sóng hình sin cho âm thanh trong trẻo như tiếng chuông
+        osc.frequency.value = freq;
+        
+        // Độ trễ giữa 2 nốt nhạc là 0.12 giây
+        const startTime = t + (index * 0.12); 
+        
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.4, startTime + 0.02); // Tăng âm lượng nhanh
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.5); // Ngân vang rồi tắt dần
+
+        osc.connect(gain);
+        gain.connect(context.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.5);
+      });
+
     } else {
-      // Tiếng "Buzz" trầm và ngắn (giống Gameshow)
-      oscillator.type = 'triangle'; 
-      oscillator.frequency.setValueAtTime(150, context.currentTime);
-      oscillator.frequency.linearRampToValueAtTime(50, context.currentTime + 0.2);
-      gainNode.gain.setValueAtTime(0.2, context.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.3);
+      // Âm thanh SAI (Bonk) - Trầm và vuốt mũi tên xuống
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      
+      osc.type = 'triangle'; // Sóng tam giác cho âm thanh hơi đục và buồn
+      osc.frequency.setValueAtTime(250, t); // Bắt đầu ở âm trầm
+      osc.frequency.exponentialRampToValueAtTime(80, t + 0.3); // Vuốt tuột xuống 80Hz
+
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.3, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+
+      osc.connect(gain);
+      gain.connect(context.destination);
+      osc.start(t);
+      osc.stop(t + 0.3);
     }
-    
-    oscillator.start(); 
-    oscillator.stop(context.currentTime + 0.3);
-  } catch (e) {}
+  } catch (e) {
+    console.log("Trình duyệt không hỗ trợ Web Audio API");
+  }
 }
+
 
 function getDueWords(vocab) {
   const now = Date.now();
@@ -272,62 +296,68 @@ const GAME_INFO = {
 
 function TopBar({ activeTab, setActiveTab, isDarkMode, setIsDarkMode, streak, onLogout, user }) {
   return (
-    <div className={`w-full px-8 py-4 flex items-center justify-between z-10 relative border-b ${isDarkMode ? 'border-white/5 bg-[#1e1f29]' : 'border-gray-200 bg-white'} transition-colors duration-300`}>
+    // Sửa 1: Thêm flex-wrap và gap-y-4 để tự rớt dòng trên Mobile, chỉnh px-4 cho điện thoại
+    <div className={`w-full px-4 sm:px-8 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-y-4 z-10 relative border-b ${isDarkMode ? 'border-white/5 bg-[#1e1f29]' : 'border-gray-200 bg-white'} transition-colors duration-300`}>
       
-      {/* Cụm Logo & Điều hướng */}
-      <div className="flex items-center gap-10">
-        <div onClick={() => setActiveTab('home')} className="cursor-pointer flex items-center group hover:scale-105 transition-transform active:scale-95" title="HaTrix">
-          <h1 className={`text-3xl font-black tracking-tighter uppercase transition-colors duration-300 ${isDarkMode ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 group-hover:from-indigo-400 group-hover:to-purple-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600 group-hover:from-purple-600 group-hover:to-indigo-700'}`}>
-            HaTrix
-          </h1>
-          <div className="w-2.5 h-2.5 rounded-full bg-[#64bc04] shadow-[0_0_10px_#64bc04] animate-pulse ml-1 mb-4"></div>
-        </div>
-
-        <nav className="flex items-center gap-2 bg-transparent">
-          {[
-            { id: 'home', i: Home, l: 'Trang chủ' },
-            { id: 'sets', i: LayoutGrid, l: 'Bộ từ vựng' },
-            { id: 'vocab', i: Book, l: 'Từ vựng' },
-            { id: 'games', i: PlayCircle, l: 'Luyện tập' }
-          ].map(item => (
-            <button 
-              key={item.id} 
-              onClick={() => setActiveTab(item.id)} 
-              className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl transition-all duration-300 font-black uppercase text-xs tracking-widest ${activeTab === item.id ? (isDarkMode ? 'bg-indigo-500/10 text-indigo-400 shadow-inner' : 'bg-indigo-50 text-indigo-600 shadow-sm') : (isDarkMode ? 'text-gray-500 hover:bg-[#252733] hover:text-gray-300' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700')}`}
-            >
-              <item.i size={18} />
-              <span className="opacity-90">{item.l}</span>
-            </button>
-          ))}
-        </nav>
+      {/* Cụm 1: Logo */}
+      <div onClick={() => setActiveTab('home')} className="cursor-pointer flex items-center shrink-0 group hover:scale-105 transition-transform active:scale-95" title="HaTrix">
+        <h1 className={`text-2xl sm:text-3xl font-black tracking-tighter uppercase transition-colors duration-300 ${isDarkMode ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 group-hover:from-indigo-400 group-hover:to-purple-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600 group-hover:from-purple-600 group-hover:to-indigo-700'}`}>
+          HaTrix
+        </h1>
+        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#64bc04] shadow-[0_0_10px_#64bc04] animate-pulse ml-1 mb-3 sm:mb-4"></div>
       </div>
 
-      {/* Cụm Công cụ: Chế độ sáng tối, Chuỗi ngày, Tài khoản */}
-      <div className="flex items-center gap-4">
+      {/* Cụm 2: Điều hướng (Menu Tabs) */}
+      {/* Sửa 2: Thêm overflow-x-auto, w-full trên mobile, và ẩn thanh cuộn xấu xí */}
+      <nav 
+        className="flex items-center gap-2 bg-transparent overflow-x-auto w-full lg:w-auto order-last lg:order-none pb-1 lg:pb-0" 
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        <style>{`nav::-webkit-scrollbar { display: none; }`}</style>
+        {[
+          { id: 'home', i: Home, l: 'Trang chủ' },
+          { id: 'sets', i: LayoutGrid, l: 'Bộ từ vựng' },
+          { id: 'vocab', i: Book, l: 'Từ vựng' },
+          { id: 'games', i: PlayCircle, l: 'Luyện tập' }
+        ].map(item => (
+          <button 
+            key={item.id} 
+            onClick={() => setActiveTab(item.id)} 
+            // Sửa 3: Thêm shrink-0 và whitespace-nowrap để các nút không bị bóp méo
+            className={`shrink-0 whitespace-nowrap flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 font-black uppercase text-[10px] sm:text-xs tracking-widest ${activeTab === item.id ? (isDarkMode ? 'bg-indigo-500/10 text-indigo-400 shadow-inner' : 'bg-indigo-50 text-indigo-600 shadow-sm') : (isDarkMode ? 'text-gray-500 hover:bg-[#252733] hover:text-gray-300' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700')}`}
+          >
+            <item.i size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <span className="opacity-90">{item.l}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* Cụm 3: Công cụ (Theme, Streak, Avatar) */}
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         
         {/* Nút Chế độ sáng/tối */}
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}
+          className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}
           title={isDarkMode ? 'Chế độ sáng' : 'Chế độ tối'}
         >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          {isDarkMode ? <Sun size={18} className="sm:w-5 sm:h-5"/> : <Moon size={18} className="sm:w-5 sm:h-5"/>}
         </button>
 
         {/* Chuỗi ngày học */}
-        <div className={`${isDarkMode ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' : 'bg-orange-100 border-orange-200 text-orange-600'} border px-5 py-3 rounded-xl flex items-center gap-2 font-black text-[10px] uppercase tracking-[0.3em] shadow-sm`}>
-          <Flame size={16} className="fill-orange-500 animate-bounce" /> {streak}
+        <div className={`${isDarkMode ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' : 'bg-orange-100 border-orange-200 text-orange-600'} border px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center gap-1.5 sm:gap-2 font-black text-[10px] uppercase tracking-[0.3em] shadow-sm`}>
+          <Flame size={14} className="sm:w-4 sm:h-4 fill-orange-500 animate-bounce" /> {streak}
         </div>
 
         {/* Nút Tài khoản & Avatar */}
         <div className="relative group">
           <div className="cursor-pointer hover:scale-105 transition-transform">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-green-400 to-blue-500 p-[2px] shadow-md">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-tr from-green-400 to-blue-500 p-[2px] shadow-md">
               <div className={`w-full h-full ${isDarkMode ? 'bg-[#1e1f29]' : 'bg-white'} rounded-[10px] flex items-center justify-center border-2 ${isDarkMode ? 'border-[#1e1f29]' : 'border-white'} overflow-hidden`}>
                 {user?.photoURL ? (
                   <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
-                  <div className="w-2.5 h-2.5 bg-[#64bc04] rounded-full shadow-[0_0_12px_#64bc04] animate-pulse"></div>
+                  <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#64bc04] rounded-full shadow-[0_0_12px_#64bc04] animate-pulse"></div>
                 )}
               </div>
             </div>
@@ -2264,7 +2294,12 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
             <div className="flex flex-col gap-3 flex-1"><div className="flex items-center gap-4"><button onClick={() => playAudio(feedbackWord.word)} className="p-2 hover:scale-125 transition-transform"><Volume2 size={28} strokeWidth={3}/></button><div className="text-3xl font-black tracking-tight">Từ: {feedbackWord.word} <span className="text-lg font-bold opacity-70 uppercase tracking-widest">({feedbackWord.type.toLowerCase()})</span></div></div>
               <div className="font-bold text-base opacity-80 pl-14 tracking-tighter">// {feedbackWord.phonetic} //</div><div className="text-2xl font-black mt-3 pl-14 tracking-tight">Nghĩa: {feedbackWord.meaning}</div>
-              <div className="flex items-start gap-3 mt-3 pl-14 text-[#13151b]"><Volume2 size={20} className="mt-1.5 shrink-0 opacity-60"/><div className="text-xl font-bold leading-tight opacity-95">Ví dụ: {getHighlightedExample(feedbackWord.example, feedbackWord.word)}</div></div>
+<div className="flex items-start gap-3 mt-3 pl-14 text-[#13151b]">
+  <button onClick={(e) => { e.stopPropagation(); playAudio(feedbackWord.example); }} className="mt-1.5 p-1 -ml-1 hover:scale-125 transition-transform cursor-pointer">
+    <Volume2 size={20} className="shrink-0 opacity-80 hover:opacity-100"/>
+  </button>
+  <div className="text-xl font-bold leading-tight opacity-95">Ví dụ: {getHighlightedExample(feedbackWord.example, feedbackWord.word)}</div>
+</div>
 <div className="text-base font-bold mt-2 pl-14 opacity-80 tracking-widest">Ghi chú: 📝 {feedbackWord.note || feedbackWord.exampleTrans || "Không có ghi chú"}</div>
             </div>
             <div className="flex items-center gap-6 shrink-0"><button className="w-16 h-16 rounded-full border-4 border-[#13151b]/20 flex items-center justify-center hover:bg-[#13151b]/10 transition-colors shadow-sm"><Pause size={32} strokeWidth={4}/></button><button onClick={handleAdvance} className="bg-white text-[#13151b] font-black py-5 px-12 rounded-[24px] text-2xl shadow-2xl hover:scale-110 active:scale-90 transition-all flex items-center gap-4 uppercase tracking-widest shadow-xl">Tiếp tục ({feedbackTimer}s) <span className="text-sm font-bold opacity-60 ml-1">↵ Enter</span></button></div>
