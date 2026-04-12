@@ -3178,14 +3178,7 @@ if (libData.length > 0) {
   };
 
 
-  const handleSimulateNextDay = () => {
-    setLastStudyDate(prev => {
-      const d = new Date(prev || Date.now());
-      d.setDate(d.getDate() - 1);
-      return d.getTime();
-    });
-    console.log("Đã lùi ngày học về hôm qua!");
-  };
+ 
 
   const [gameHistory, setGameHistory] = useState([]);
 
