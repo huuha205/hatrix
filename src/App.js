@@ -414,87 +414,103 @@ function HomeTab({ vocab, onNavigate, isDarkMode, streak, onSimulateNextDay }) {
   }, []);
 
   const stats = [
-    { l: 'Tổng từ', v: vocab.length, bg: 'bg-[#3b82f6]', text: 'text-white' },
-    { l: 'Đã thuộc', v: masteredCount, bg: 'bg-[#10b981]', text: 'text-white' },
-    { l: 'Tiến độ', v: vocab.length > 0 ? `${Math.round((masteredCount / vocab.length) * 100)}%` : '0%', bg: 'bg-[#a855f7]', text: 'text-white' },
-    { l: 'Cần ôn', v: dueCount, bg: 'bg-[#ef4444]', text: 'text-white' }
+    { l: 'Tổng từ', v: vocab.length, color: 'from-blue-400 to-cyan-400', bg: 'bg-blue-500/10', text: 'text-blue-400' },
+    { l: 'Đã thuộc', v: masteredCount, color: 'from-emerald-400 to-green-400', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+    { l: 'Tiến độ', v: vocab.length > 0 ? `${Math.round((masteredCount / vocab.length) * 100)}%` : '0%', color: 'from-purple-400 to-fuchsia-400', bg: 'bg-purple-500/10', text: 'text-purple-400' },
+    { l: 'Cần ôn', v: dueCount, color: 'from-rose-400 to-red-400', bg: 'bg-rose-500/10', text: 'text-rose-400' }
   ];
 
   return (
-    <div className="max-w-5xl mx-auto pt-6 space-y-10 animate-in fade-in duration-500 px-4 font-sans pb-12">
-      
-      {/* 🚀 Ô 1: BANNER HERO CỰC CHẤT (Bỏ ảnh mờ ảo, xài khối màu mạnh) */}
-      <div className="w-full bg-[#ccff00] border-4 border-white rounded-2xl p-8 sm:p-10 shadow-[8px_8px_0px_white] flex flex-col md:flex-row items-center justify-between hover:shadow-[12px_12px_0px_white] hover:-translate-y-1 transition-all group">
-        <div>
-          <h2 className="text-4xl sm:text-5xl font-black text-[#13151b] uppercase tracking-tighter mb-2">
-            Hatrix Dashboard
+    <div className="max-w-5xl mx-auto pt-6 space-y-8 animate-in fade-in duration-700 px-4 font-sans pb-12">
+
+      {/* ✨ Ô 1: HERO BANNER - Glassmorphism & Soft Glow */}
+      <div className={`relative w-full rounded-[32px] p-8 sm:p-10 overflow-hidden ${isDarkMode ? 'bg-[#1e1f29]/60 border border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.2)]' : 'bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]'} backdrop-blur-xl flex flex-col md:flex-row items-center justify-between group transition-all`}>
+        {/* Soft background glows (Hai đốm sáng mờ ảo phía sau) */}
+        <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-indigo-500/30 transition-colors duration-700"></div>
+        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-purple-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-purple-500/30 transition-colors duration-700"></div>
+
+        <div className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
+          <h2 className={`text-3xl sm:text-4xl font-black mb-3 tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Chào mừng trở lại! 👋
           </h2>
-          <p className="text-[#13151b] font-bold text-sm sm:text-base uppercase tracking-widest border-b-4 border-[#13151b] inline-block pb-1 opacity-80">
-            Sẵn sàng bứt phá từ vựng hôm nay!
+          <p className={`text-sm sm:text-base font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            Sẵn sàng bứt phá giới hạn từ vựng của bạn hôm nay chưa?
           </p>
         </div>
-        <div className="hidden md:flex w-24 h-24 bg-white border-4 border-[#13151b] rounded-full items-center justify-center shadow-[6px_6px_0px_#13151b] group-hover:rotate-12 transition-transform">
-          <Zap size={48} className="text-[#13151b] fill-current" />
+        <div className="relative z-10 mt-6 md:mt-0">
+           <div className={`w-20 h-20 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-100'} shadow-lg group-hover:scale-105 transition-transform duration-500`}>
+              <Zap size={36} className="text-indigo-400 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]" />
+           </div>
         </div>
       </div>
-      
-      {/* 🚀 Ô 2: THỐNG KÊ (4 KHỐI MÀU NEON) */}
+
+      {/* ✨ Ô 2: THỐNG KÊ - Floating Cards with Gradient Text */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 w-full">
         {stats.map((s, i) => (
-          <div key={i} className={`${s.bg} border-4 border-white rounded-2xl flex flex-col items-center justify-center p-6 shadow-[6px_6px_0px_white] hover:-translate-y-2 hover:shadow-[10px_10px_0px_white] transition-all text-center`}>
-            <div className={`text-4xl sm:text-5xl font-black ${s.text} tracking-tighter drop-shadow-md`}>{s.v}</div>
-            <div className="text-[10px] sm:text-xs font-black text-white/80 uppercase tracking-widest mt-2 bg-black/20 px-3 py-1 rounded-md border-2 border-black/10">{s.l}</div>
+          <div key={i} className={`relative overflow-hidden rounded-[24px] flex flex-col items-center justify-center p-6 transition-all duration-300 hover:-translate-y-1 ${isDarkMode ? 'bg-[#1e1f29]/60 border border-white/5 shadow-lg hover:shadow-indigo-500/10' : 'bg-white border border-gray-100 shadow-sm hover:shadow-xl'}`}>
+            <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"></div>
+            <div className={`text-4xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-br ${s.color} drop-shadow-sm mb-2`}>
+              {s.v}
+            </div>
+            <div className={`text-[11px] sm:text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {s.l}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* 🚀 Ô 3: CHUỖI NGÀY HỌC (THIẾT KẾ CỨNG CÁP) */}
-      <div className="w-full bg-[#ff6b00] border-4 border-white rounded-2xl p-6 sm:p-10 shadow-[8px_8px_0px_white] flex flex-col xl:flex-row justify-between xl:items-center gap-8 relative overflow-hidden">
-        
-        <div className="flex flex-col z-10">
-          <div className="flex items-center gap-3 font-black uppercase text-xs sm:text-sm mb-4 text-[#13151b] tracking-widest">
-            <div className="bg-white p-1.5 rounded-md border-2 border-[#13151b] shadow-[2px_2px_0px_#13151b]"><Flame size={20} className="fill-orange-500 text-orange-500"/></div>
-            Chuỗi ngày học
-            {/* NÚT GIẢ LẬP LÀM NGẦU HƠN */}
-            <button onClick={onSimulateNextDay} className="ml-4 bg-[#13151b] text-white hover:bg-white hover:text-[#13151b] px-3 py-2 rounded-lg text-[10px] transition-all border-2 border-[#13151b] hover:shadow-[3px_3px_0px_#13151b] active:translate-y-1 active:translate-x-1 active:shadow-none shadow-[3px_3px_0px_white]">TEST QUA NGÀY</button>
+      {/* ✨ Ô 3: CHUỖI NGÀY HỌC - Smooth Gradient & Soft Shadows */}
+      <div className="w-full bg-gradient-to-br from-orange-400 to-rose-500 rounded-[32px] p-8 sm:p-10 shadow-[0_15px_40px_rgba(244,63,94,0.3)] flex flex-col xl:flex-row justify-between xl:items-center gap-8 relative overflow-hidden transition-all hover:shadow-[0_20px_50px_rgba(244,63,94,0.4)]">
+        {/* Glow hiệu ứng hạt nổi */}
+        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_50%)] pointer-events-none"></div>
+
+        <div className="flex flex-col z-10 text-white">
+          <div className="flex items-center gap-3 font-bold uppercase text-xs sm:text-sm mb-3 tracking-widest opacity-90">
+            <Flame size={20} className="fill-white drop-shadow-md" /> Chuỗi ngày học
+            <button onClick={onSimulateNextDay} className="ml-2 sm:ml-4 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] transition-all border border-white/20 active:scale-95 shadow-sm">Test qua ngày</button>
           </div>
-          <div className="text-6xl sm:text-8xl font-black flex items-baseline gap-3 tracking-tighter text-white drop-shadow-[4px_4px_0px_#13151b]">
-            {streak} <span className="text-xl sm:text-2xl font-black text-[#13151b] uppercase tracking-widest drop-shadow-none">ngày</span>
+          <div className="text-6xl sm:text-7xl font-black flex items-baseline gap-3 tracking-tighter drop-shadow-md">
+            {streak} <span className="text-xl sm:text-2xl font-bold opacity-80 uppercase tracking-widest">ngày</span>
           </div>
         </div>
 
-        <div className="flex justify-between sm:justify-end items-end gap-2 sm:gap-4 z-10 w-full xl:w-auto overflow-x-auto pb-2 custom-scrollbar">
+        <div className="flex justify-between sm:justify-end items-center gap-2 sm:gap-3 z-10 w-full xl:w-auto overflow-x-auto pb-2 custom-scrollbar">
           {last7Days.map((d, i) => (
-            <div key={i} className="flex flex-col items-center gap-3 shrink-0">
-              <div className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center font-black transition-all text-sm sm:text-base border-4 ${d.isToday ? 'bg-white text-[#ff6b00] border-[#13151b] shadow-[4px_4px_0px_#13151b] -translate-y-2 rounded-xl' : 'bg-transparent text-[#13151b] border-[#13151b]/30 rounded-lg opacity-60'}`}>
-                {d.isToday ? <Flame size={24} className="fill-current animate-pulse"/> : d.date}
+            <div key={i} className="flex flex-col items-center gap-2 shrink-0">
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center font-bold transition-all duration-300 text-sm sm:text-base rounded-2xl backdrop-blur-md ${d.isToday ? 'bg-white text-rose-500 shadow-[0_0_20px_rgba(255,255,255,0.4)] scale-110' : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'}`}>
+                {d.isToday ? <Flame size={24} className="fill-current drop-shadow-sm" /> : d.date}
               </div>
-              <span className="text-[10px] sm:text-xs font-black text-[#13151b] uppercase tracking-widest opacity-80">{d.dayName}</span>
+              <span className="text-[10px] sm:text-xs font-bold text-white/80 uppercase tracking-widest">{d.dayName}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 🚀 Ô 4: TRUY CẬP NHANH (NÚT BẤM CƠ HỌC) */}
+      {/* ✨ Ô 4: TRUY CẬP NHANH - Minimal Floating Cards */}
       <div className="pt-4">
-        <h2 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6 uppercase tracking-widest border-b-4 ${isDarkMode ? 'border-white/20' : 'border-gray-900'} inline-block pb-2`}>Truy cập nhanh</h2>
+        <h2 className={`text-sm font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-6 ml-2`}>Truy cập nhanh</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
           {[
-            { id: 'vocab', icon: Plus, title: 'THÊM TỪ MỚI', desc: 'Xây dựng kho từ vựng', bg: 'bg-[#00e5ff]' },
-            { id: 'games', icon: Zap, title: 'VÀO LUYỆN TẬP', desc: 'Chơi game Flashcard', bg: 'bg-[#facc15]' }
+            { id: 'vocab', icon: Plus, title: 'Thêm từ mới', desc: 'Xây dựng kho từ vựng cá nhân', color: 'from-cyan-400 to-blue-500', iconColor: 'text-cyan-500', shadow: 'hover:shadow-cyan-500/20' },
+            { id: 'games', icon: Zap, title: 'Luyện tập ngay', desc: 'Ôn tập với Flashcard & Game', color: 'from-fuchsia-400 to-purple-500', iconColor: 'text-fuchsia-500', shadow: 'hover:shadow-fuchsia-500/20' }
           ].map((btn, i) => (
-            <div key={i} onClick={() => onNavigate(btn.id)} className={`${btn.bg} border-4 border-white rounded-2xl p-6 flex items-center justify-between cursor-pointer shadow-[6px_6px_0px_white] hover:-translate-y-2 hover:shadow-[10px_10px_0px_white] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all group`}>
-               <div className="flex items-center gap-5">
-                 <div className={`w-14 h-14 rounded-xl flex items-center justify-center bg-[#13151b] text-white border-2 border-[#13151b] shadow-[4px_4px_0px_#13151b] group-hover:scale-110 transition-transform`}>
-                   <btn.icon size={28} strokeWidth={3}/>
+            <div key={i} onClick={() => onNavigate(btn.id)} className={`relative overflow-hidden rounded-[24px] p-6 flex items-center justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 ${isDarkMode ? 'bg-[#1e1f29]/80 border border-white/5 shadow-lg' : 'bg-white border border-gray-100 shadow-md'} ${btn.shadow} group`}>
+               
+               {/* Line gradient phát sáng mờ khi hover */}
+               <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${btn.color}`}></div>
+               
+               <div className="flex items-center gap-5 relative z-10">
+                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDarkMode ? 'bg-[#252733]' : 'bg-gray-50'} ${btn.iconColor} shadow-inner group-hover:scale-110 transition-transform duration-300`}>
+                   <btn.icon size={26} strokeWidth={2.5}/>
                  </div>
                  <div>
-                   <div className={`font-black text-[#13151b] text-xl tracking-tight`}>{btn.title}</div>
-                   <div className="text-[10px] text-[#13151b]/70 font-black uppercase tracking-widest mt-1">{btn.desc}</div>
+                   <div className={`font-black text-lg tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'} group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r ${btn.color} transition-all duration-300`}>{btn.title}</div>
+                   <div className={`text-[11px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{btn.desc}</div>
                  </div>
                </div>
-               <div className="w-10 h-10 bg-white border-2 border-[#13151b] rounded-full flex items-center justify-center text-[#13151b] shadow-[2px_2px_0px_#13151b] group-hover:translate-x-2 transition-transform">
-                 <ArrowRight size={20} strokeWidth={3} />
+               
+               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkMode ? 'text-gray-500 group-hover:text-white group-hover:bg-white/10' : 'text-gray-400 group-hover:text-gray-900 group-hover:bg-gray-100'} transition-all duration-300 relative z-10`}>
+                 <ArrowRight size={20} strokeWidth={2.5} />
                </div>
             </div>
           ))}
