@@ -1316,7 +1316,7 @@ function GamesTab({ vocab, sets, onStartCustomGame, onOpenSRS, history, isDarkMo
       <div className="w-full bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[32px] p-8 sm:p-10 shadow-[0_15px_40px_rgba(99,102,241,0.3)] flex flex-col sm:flex-row items-center justify-between relative overflow-hidden transition-all hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)]">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.2),transparent_50%)] pointer-events-none"></div>
         <div className="text-center sm:text-left mb-6 sm:mb-0 relative z-10">
-          <h2 className="text-white text-2xl sm:text-3xl font-black mb-2 tracking-tight">Hệ thống ôn tập ngắt quãng (SRS)</h2>
+          <h2 className="text-white text-2xl sm:text-3xl font-black mb-2 tracking-tight">Ôn tập nhắc lại ()</h2>
           <p className="text-white/80 font-medium text-sm sm:text-base">Thuật toán thông minh tự động nhắc lại từ vựng bạn sắp quên.</p>
         </div>
         <button onClick={onOpenSRS} className="bg-white text-indigo-600 font-bold py-3.5 px-8 rounded-xl text-sm transition-all shadow-[0_8px_20px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 whitespace-nowrap relative z-10 uppercase tracking-widest flex items-center gap-2">
@@ -2767,6 +2767,68 @@ function SetsTab({ sets, vocab, onCreateSet, onDeleteSet, onOpenSet, libraries, 
     </div>
   );
 }
+
+function SRSOverviewModal({ onClose, vocab, onStartCustomGame, isDarkMode }) {
+  // Lấy danh sách từ cần ôn
+  const dueWords = vocab.filter(w => {
+    if (!w.nextReview) return true; // Chưa học bao giờ
+    return new Date(w.nextReview).getTime() <= new Date().getTime(); // Đã đến hạn
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[600] p-4 animate-in fade-in duration-300">
+      <div className={`relative w-full max-w-lg rounded-[32px] p-8 overflow-hidden shadow-2xl transition-all ${isDarkMode ? 'bg-[#1e1f29]/80 border border-white/10' : 'bg-white/90 border border-gray-200'} backdrop-blur-xl animate-in zoom-in-95`}>
+        
+        {/* Nền sáng mờ ảo chuẩn Glassmorphism */}
+        <div className="absolute -top-20 -right-20 w-48 h-48 bg-indigo-500/20 rounded-full blur-[60px] pointer-events-none"></div>
+        <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-fuchsia-500/20 rounded-full blur-[60px] pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-500/30">
+            <RotateCw size={40} strokeWidth={2.5} />
+          </div>
+          
+          <h2 className={`text-2xl sm:text-3xl font-black tracking-tight mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Phân Tích Trí Nhớ
+          </h2>
+          <p className={`text-sm mb-8 font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            Hệ thống lặp lại ngắt quãng (SRS) đã quét và tìm ra các từ vựng bạn chuẩn bị quên.
+          </p>
+
+          <div className={`w-full rounded-2xl p-6 mb-8 flex flex-col items-center border ${isDarkMode ? 'bg-black/20 border-white/5' : 'bg-gray-50 border-gray-100'} shadow-inner`}>
+            <span className={`text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400 drop-shadow-sm mb-2`}>
+              {dueWords.length}
+            </span>
+            <span className={`text-xs uppercase tracking-widest font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              Từ vựng cần ôn tập ngay
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4 w-full">
+            <button 
+              onClick={onClose} 
+              className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all ${isDarkMode ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              Để sau
+            </button>
+            <button 
+              onClick={() => {
+                onClose();
+                if (dueWords.length > 0) {
+                  onStartCustomGame('flashcard', dueWords); 
+                }
+              }} 
+              disabled={dueWords.length === 0}
+              className={`flex-1 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 shadow-[0_8px_20px_rgba(99,102,241,0.3)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              Ôn tập ngay
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+} 
 // --- 4. COMPONENT GỐC (APP) ---
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -3176,12 +3238,12 @@ if (libData.length > 0) {
   };
 
 
-  const handleSaveMultiple = async (setId, newWords) => {
+ const handleSaveMultiple = async (setId, newWords) => {
     try {
       // 1. Chuẩn bị dữ liệu từ vựng (Gắn dấu ấn của Hà vào)
       const formattedWords = newWords.map(w => ({
         ...w,
-        userId: currentUser.uid, // <--- Bắt buộc phải có để Rules cho phép lưu
+        userId: currentUser.uid, 
         level: 1,
         correctCount: 0,
         wrongCount: 0,
@@ -3195,24 +3257,36 @@ if (libData.length > 0) {
       
       // Chờ Firebase lưu xong và lấy về các ID thật do Firebase cấp
       const docRefs = await Promise.all(savePromises);
-      const newWordIds = docRefs.map(ref => ref.id); // Trích xuất mảng ID: ["AQz1...", "7jHk..."]
+      const newWordIds = docRefs.map(ref => ref.id); 
+
+      // 👉 THÊM MỚI: Cập nhật thẳng vào kho từ vựng hiện tại (Không cần reload)
+      const wordsWithRealIds = formattedWords.map((w, index) => ({
+        ...w,
+        id: newWordIds[index]
+      }));
+      setVocab(prev => [...prev, ...wordsWithRealIds]);
 
       // 3. BƯỚC QUAN TRỌNG: CẬP NHẬT ID VÀO BỘ TỪ (bảng sets)
-      // Tìm bộ từ hiện tại để lấy các từ cũ (nếu có), tránh bị ghi đè mất
       const targetSet = sets.find(s => s.id === setId);
       const currentWordIds = targetSet?.wordIds || []; 
       
-      // Gộp ID từ cũ và ID từ mới lại với nhau
       const updatedWordIds = [...currentWordIds, ...newWordIds];
 
-      // Gửi lệnh cập nhật mảng wordIds lên bảng "sets"
       const setRef = doc(db, "sets", setId);
       await updateDoc(setRef, { 
         wordIds: updatedWordIds 
       });
 
+      // 👉 THÊM MỚI: Cập nhật bộ từ trên màn hình ngay lập tức
+      setSets(prev => prev.map(s => 
+        s.id === setId ? { ...s, wordIds: updatedWordIds } : s
+      ));
+
       console.log("Đã lưu từ vựng và đưa vào bộ từ thành công!");
-      window.location.reload(); // Ép load lại trang để hiển thị kết quả mới nhất
+      
+      // ❌ ĐÃ XÓA: window.location.reload(); 
+      // Không load lại trang nữa, React sẽ tự động vẽ lại giao diện tại chỗ!
+
     } catch (error) {
       console.error("Lỗi khi lưu nhiều từ: ", error);
       alert("Có lỗi xảy ra khi lưu lên mây, Hà kiểm tra lại Console (F12) nhé!");
