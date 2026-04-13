@@ -1276,7 +1276,7 @@ function VocabTab({ vocab, onToggleMastered, onBulkAction, onOpenAddMultiple, is
 
 function GamesTab({ vocab, sets, onStartCustomGame, history, isDarkMode }) {
   const [selectedSet, setSelectedSet] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all'); // Đổi mặc định thành "Tất cả"
+  const [statusFilter, setStatusFilter] = useState('all'); 
   const [orderMode, setOrderMode] = useState('random');
   const [wordCount, setWordCount] = useState('20');
   
@@ -1310,8 +1310,9 @@ function GamesTab({ vocab, sets, onStartCustomGame, history, isDarkMode }) {
   ];
   
   return (
-    <div className="max-w-5xl mx-auto pt-8 space-y-8 pb-12 font-sans px-4 animate-in fade-in duration-500">
-      {/* Chỉ giữ lại phần tiêu đề và thiết lập bài học */}
+    <div className="max-w-5xl mx-auto pt-8 space-y-12 pb-12 font-sans px-4 animate-in fade-in duration-500">
+      
+      {/* KHU VỰC CHỌN GAME */}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
           <div>
@@ -1323,6 +1324,7 @@ function GamesTab({ vocab, sets, onStartCustomGame, history, isDarkMode }) {
           </span>
         </div>
         
+        {/* Bộ Lọc */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Bộ từ vựng', val: selectedSet, set: setSelectedSet, opts: [{value: 'all', text: 'Tất cả từ vựng'}, ...sets.map(s => ({value: s.id, text: s.name}))] },
@@ -1342,6 +1344,7 @@ function GamesTab({ vocab, sets, onStartCustomGame, history, isDarkMode }) {
           ))}
         </div>
 
+        {/* Danh sách thẻ Game */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pt-4">
           {games.map(game => (
             <div key={game.id} onClick={() => handlePlayGame(game.id)} className={`relative overflow-hidden rounded-[24px] p-6 flex items-center gap-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 ${availableWords.length === 0 ? 'opacity-50 pointer-events-none grayscale' : ''} ${isDarkMode ? 'bg-[#1e1f29]/60 border border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:bg-[#252733]/80 backdrop-blur-xl' : 'bg-white border border-gray-100 shadow-md hover:shadow-xl'} group`}>
@@ -1356,6 +1359,49 @@ function GamesTab({ vocab, sets, onStartCustomGame, history, isDarkMode }) {
           ))}
         </div>
       </div>
+
+      {/* LỊCH SỬ LUYỆN TẬP ĐÃ QUAY TRỞ LẠI */}
+      <div className="pt-4 border-t border-white/5">
+        <h3 className={`text-xl font-black tracking-tight mb-6 px-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lịch sử luyện tập</h3>
+        
+        {history && history.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {history.map((record) => {
+               // Tìm tên và icon của game tương ứng (Nếu là SRS cũ thì cho icon sấm sét)
+               const gameInfo = games.find(g => g.id === record.gameId) || { name: 'Ôn tập ngắt quãng', icon: Zap, color: 'text-indigo-400' };
+               
+               const date = new Date(record.date);
+               const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} - ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+               
+               return (
+                 <div key={record.id} className={`p-5 rounded-[24px] border flex items-center justify-between transition-all hover:-translate-y-0.5 ${isDarkMode ? 'bg-[#1e1f29]/60 border-white/5 shadow-sm' : 'bg-white border-gray-100 shadow-sm'} backdrop-blur-xl`}>
+                   <div className="flex items-center gap-4">
+                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${isDarkMode ? 'bg-black/20' : 'bg-gray-50'} ${gameInfo.color}`}>
+                       <gameInfo.icon size={24} strokeWidth={2.5} />
+                     </div>
+                     <div>
+                       <div className={`font-black text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{gameInfo.name}</div>
+                       <div className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>{timeString}</div>
+                     </div>
+                   </div>
+                   <div className={`text-2xl font-black ${record.accuracy >= 80 ? 'text-[#64bc04]' : record.accuracy >= 50 ? 'text-yellow-500' : 'text-red-500'}`}>
+                     {record.accuracy}%
+                   </div>
+                 </div>
+               );
+            })}
+          </div>
+        ) : (
+          <div className={`p-10 rounded-[32px] border text-center flex flex-col items-center ${isDarkMode ? 'bg-[#1e1f29]/40 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+            <div className="w-16 h-16 bg-gray-500/10 rounded-full flex items-center justify-center mb-4 text-gray-500">
+              <Clock size={28}/>
+            </div>
+            <div className="text-gray-500 font-bold text-sm">Chưa có lịch sử luyện tập nào.</div>
+            <div className="text-gray-500 text-xs mt-1">Hãy chơi thử một game để ghi nhận thành tích nhé!</div>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
