@@ -1274,9 +1274,9 @@ function VocabTab({ vocab, onToggleMastered, onBulkAction, onOpenAddMultiple, is
   );
 }
 
-function GamesTab({ vocab, sets, onStartCustomGame, onOpenSRS, history, isDarkMode }) {
+function GamesTab({ vocab, sets, onStartCustomGame, history, isDarkMode }) {
   const [selectedSet, setSelectedSet] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('unmastered');
+  const [statusFilter, setStatusFilter] = useState('all'); // Đổi mặc định thành "Tất cả"
   const [orderMode, setOrderMode] = useState('random');
   const [wordCount, setWordCount] = useState('20');
   
@@ -1310,34 +1310,23 @@ function GamesTab({ vocab, sets, onStartCustomGame, onOpenSRS, history, isDarkMo
   ];
   
   return (
-    <div className="max-w-5xl mx-auto pt-8 space-y-8 pb-12 font-sans px-4">
-      
-      {/* SRS Banner - Glowing Aura */}
-      <div className="w-full bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[32px] p-8 sm:p-10 shadow-[0_15px_40px_rgba(99,102,241,0.3)] flex flex-col sm:flex-row items-center justify-between relative overflow-hidden transition-all hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)]">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.2),transparent_50%)] pointer-events-none"></div>
-        <div className="text-center sm:text-left mb-6 sm:mb-0 relative z-10">
-          <h2 className="text-white text-2xl sm:text-3xl font-black mb-2 tracking-tight">Ôn tập nhắc lại ()</h2>
-          <p className="text-white/80 font-medium text-sm sm:text-base">Thuật toán thông minh tự động nhắc lại từ vựng bạn sắp quên.</p>
-        </div>
-        <button onClick={onOpenSRS} className="bg-white text-indigo-600 font-bold py-3.5 px-8 rounded-xl text-sm transition-all shadow-[0_8px_20px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 whitespace-nowrap relative z-10 uppercase tracking-widest flex items-center gap-2">
-          <RotateCw size={18} strokeWidth={3}/> Tổng quan
-        </button>
-      </div>
-
-      {/* Cấu hình & Game List */}
+    <div className="max-w-5xl mx-auto pt-8 space-y-8 pb-12 font-sans px-4 animate-in fade-in duration-500">
+      {/* Chỉ giữ lại phần tiêu đề và thiết lập bài học */}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
-          <h3 className={`text-xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Thiết lập bài học</h3>
-          <span className={`text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>
+          <div>
+            <h3 className={`text-2xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Khu vực Luyện tập</h3>
+            <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Chọn chế độ chơi để bắt đầu học từ vựng</p>
+          </div>
+          <span className={`text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>
             Sẵn sàng: {availableWords.length} từ
           </span>
         </div>
         
-        {/* Form cấu hình */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Bộ từ vựng', val: selectedSet, set: setSelectedSet, opts: [{value: 'all', text: 'Tất cả từ vựng'}, ...sets.map(s => ({value: s.id, text: s.name}))] },
-            { label: 'Trạng thái', val: statusFilter, set: setStatusFilter, opts: [{value: 'all', text: 'Tất cả'}, {value: 'unmastered', text: 'Cần ôn tập'}, {value: 'mastered', text: 'Đã thuộc'}] },
+            { label: 'Trạng thái', val: statusFilter, set: setStatusFilter, opts: [{value: 'all', text: 'Tất cả'}, {value: 'unmastered', text: 'Cần học'}, {value: 'mastered', text: 'Đã thuộc'}] },
             { label: 'Thứ tự', val: orderMode, set: setOrderMode, opts: [{value: 'random', text: 'Ngẫu nhiên'}, {value: 'seq', text: 'Theo danh sách'}] },
             { label: 'Số lượng', val: wordCount, set: setWordCount, opts: [{value: '10', text: '10 từ'}, {value: '20', text: '20 từ'}, {value: '30', text: '30 từ'}, {value: 'all', text: 'Tất cả'}] },
           ].map((field, idx) => (
@@ -1353,7 +1342,6 @@ function GamesTab({ vocab, sets, onStartCustomGame, onOpenSRS, history, isDarkMo
           ))}
         </div>
 
-        {/* Danh sách thẻ Game Glassmorphism */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pt-4">
           {games.map(game => (
             <div key={game.id} onClick={() => handlePlayGame(game.id)} className={`relative overflow-hidden rounded-[24px] p-6 flex items-center gap-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 ${availableWords.length === 0 ? 'opacity-50 pointer-events-none grayscale' : ''} ${isDarkMode ? 'bg-[#1e1f29]/60 border border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:bg-[#252733]/80 backdrop-blur-xl' : 'bg-white border border-gray-100 shadow-md hover:shadow-xl'} group`}>
@@ -3354,14 +3342,15 @@ if (libData.length > 0) {
           {activeTab === 'home' && <HomeTab vocab={vocab} onNavigate={setActiveTab} isDarkMode={isDarkMode} streak={streak} onSimulateNextDay={handleSimulateNextDay} />}
           {activeTab === 'sets' && <SetsTab sets={sets} vocab={vocab} onCreateSet={handleCreateSet} onDeleteSet={handleDeleteSet} onOpenSet={setCurrentSet} libraries={libraries} setLibraries={setLibraries} onStartCustomGame={handleStartCustomGame} isDarkMode={isDarkMode} />}
           {activeTab === 'vocab' && <VocabTab vocab={vocab} onToggleMastered={handleToggleMastered} onBulkAction={handleBulkAction} onOpenAddMultiple={() => setIsAddMultipleOpen(true)} isDarkMode={isDarkMode} onUpdateWord={handleUpdateWord} />}
-          {activeTab === 'games' && <GamesTab vocab={vocab} sets={sets} onStartCustomGame={handleStartCustomGame} onOpenSRS={() => { updateStreak(); setIsSRSModalOpen(true); }} history={gameHistory} isDarkMode={isDarkMode} />}
+{/* SỬA DÒNG NÀY TRONG PHẦN RETURN CỦA APP */}
+{activeTab === 'games' && <GamesTab vocab={vocab} sets={sets} onStartCustomGame={handleStartCustomGame} history={gameHistory} isDarkMode={isDarkMode} />}
         </div>
 
       </div>
 
       {isAddMultipleOpen && <AddMultipleWordsModal isDarkMode={isDarkMode} sets={sets} onClose={() => setIsAddMultipleOpen(false)} onSave={handleSaveMultiple} onCreateSet={handleCreateSet} />}
       {currentSet && <SetDetailModal isDarkMode={isDarkMode} set={currentSet} vocab={vocab} onClose={() => setCurrentSet(null)} onSave={handleSaveSet} onUpdateWord={handleUpdateWord} />}
-      {isSRSModalOpen && <SRSOverviewModal isDarkMode={isDarkMode} vocab={vocab} sets={sets} onClose={() => setIsSRSModalOpen(false)} onStartReview={(words) => { setCustomSessionWords(words); setCurrentGame('srs'); setIsSRSModalOpen(false); }} />}
+     
     </div>
   );
 }
