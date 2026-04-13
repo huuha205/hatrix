@@ -1273,12 +1273,14 @@ function VocabTab({ vocab, onToggleMastered, onBulkAction, onOpenAddMultiple, is
     </div>
   );
 }
-
 function GamesTab({ vocab, sets, onStartCustomGame, history, isDarkMode }) {
   const [selectedSet, setSelectedSet] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all'); 
   const [orderMode, setOrderMode] = useState('random');
   const [wordCount, setWordCount] = useState('20');
+  
+  // 👉 ĐÃ THÊM LẠI BIẾN TRẠNG THÁI THU GỌN/MỞ RỘNG
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
   
   const availableWords = useMemo(() => {
       let list = [...vocab];
@@ -1360,44 +1362,58 @@ function GamesTab({ vocab, sets, onStartCustomGame, history, isDarkMode }) {
         </div>
       </div>
 
-      {/* LỊCH SỬ LUYỆN TẬP ĐÃ QUAY TRỞ LẠI */}
+      {/* LỊCH SỬ LUYỆN TẬP */}
       <div className="pt-4 border-t border-white/5">
-        <h3 className={`text-xl font-black tracking-tight mb-6 px-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lịch sử luyện tập</h3>
+        <div className="flex items-center justify-between mb-6 px-2">
+          <h3 className={`text-xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lịch sử luyện tập</h3>
+          
+          {/* 👉 NÚT THU GỌN / MỞ RỘNG */}
+          <button 
+            onClick={() => setIsHistoryExpanded(!isHistoryExpanded)} 
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${isDarkMode ? 'bg-[#1e1f29] hover:bg-white/10 text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
+          >
+            {isHistoryExpanded ? 'Thu gọn' : 'Mở rộng'}
+            <ChevronDown size={16} strokeWidth={3} className={`transition-transform duration-300 ${isHistoryExpanded ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
         
-        {history && history.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {history.map((record) => {
-               // Tìm tên và icon của game tương ứng (Nếu là SRS cũ thì cho icon sấm sét)
-               const gameInfo = games.find(g => g.id === record.gameId) || { name: 'Ôn tập ngắt quãng', icon: Zap, color: 'text-indigo-400' };
-               
-               const date = new Date(record.date);
-               const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} - ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-               
-               return (
-                 <div key={record.id} className={`p-5 rounded-[24px] border flex items-center justify-between transition-all hover:-translate-y-0.5 ${isDarkMode ? 'bg-[#1e1f29]/60 border-white/5 shadow-sm' : 'bg-white border-gray-100 shadow-sm'} backdrop-blur-xl`}>
-                   <div className="flex items-center gap-4">
-                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${isDarkMode ? 'bg-black/20' : 'bg-gray-50'} ${gameInfo.color}`}>
-                       <gameInfo.icon size={24} strokeWidth={2.5} />
+        {/* 👉 ẨN/HIỆN NỘI DUNG DỰA VÀO BIẾN isHistoryExpanded */}
+        {isHistoryExpanded && (
+          <div className="animate-in slide-in-from-top-4 fade-in duration-300">
+            {history && history.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {history.map((record) => {
+                   const gameInfo = games.find(g => g.id === record.gameId) || { name: 'Ôn tập ngắt quãng', icon: Zap, color: 'text-indigo-400' };
+                   const date = new Date(record.date);
+                   const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} - ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                   
+                   return (
+                     <div key={record.id} className={`p-5 rounded-[24px] border flex items-center justify-between transition-all hover:-translate-y-0.5 ${isDarkMode ? 'bg-[#1e1f29]/60 border-white/5 shadow-sm' : 'bg-white border-gray-100 shadow-sm'} backdrop-blur-xl`}>
+                       <div className="flex items-center gap-4">
+                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${isDarkMode ? 'bg-black/20' : 'bg-gray-50'} ${gameInfo.color}`}>
+                           <gameInfo.icon size={24} strokeWidth={2.5} />
+                         </div>
+                         <div>
+                           <div className={`font-black text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{gameInfo.name}</div>
+                           <div className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>{timeString}</div>
+                         </div>
+                       </div>
+                       <div className={`text-2xl font-black ${record.accuracy >= 80 ? 'text-[#64bc04]' : record.accuracy >= 50 ? 'text-yellow-500' : 'text-red-500'}`}>
+                         {record.accuracy}%
+                       </div>
                      </div>
-                     <div>
-                       <div className={`font-black text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{gameInfo.name}</div>
-                       <div className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>{timeString}</div>
-                     </div>
-                   </div>
-                   <div className={`text-2xl font-black ${record.accuracy >= 80 ? 'text-[#64bc04]' : record.accuracy >= 50 ? 'text-yellow-500' : 'text-red-500'}`}>
-                     {record.accuracy}%
-                   </div>
-                 </div>
-               );
-            })}
-          </div>
-        ) : (
-          <div className={`p-10 rounded-[32px] border text-center flex flex-col items-center ${isDarkMode ? 'bg-[#1e1f29]/40 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-            <div className="w-16 h-16 bg-gray-500/10 rounded-full flex items-center justify-center mb-4 text-gray-500">
-              <Clock size={28}/>
-            </div>
-            <div className="text-gray-500 font-bold text-sm">Chưa có lịch sử luyện tập nào.</div>
-            <div className="text-gray-500 text-xs mt-1">Hãy chơi thử một game để ghi nhận thành tích nhé!</div>
+                   );
+                })}
+              </div>
+            ) : (
+              <div className={`p-10 rounded-[32px] border text-center flex flex-col items-center ${isDarkMode ? 'bg-[#1e1f29]/40 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+                <div className="w-16 h-16 bg-gray-500/10 rounded-full flex items-center justify-center mb-4 text-gray-500">
+                  <Clock size={28}/>
+                </div>
+                <div className="text-gray-500 font-bold text-sm">Chưa có lịch sử luyện tập nào.</div>
+                <div className="text-gray-500 text-xs mt-1">Hãy chơi thử một game để ghi nhận thành tích nhé!</div>
+              </div>
+            )}
           </div>
         )}
       </div>
