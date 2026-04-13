@@ -3205,48 +3205,66 @@ if (libData.length > 0) {
     setCurrentUser(null);
   };
   
-  // LOGIC CHUỖI NGÀY HỌC (STREAK)
-  const [streak, setStreak] = useState(1);
+ // LOGIC CHUỖI NGÀY HỌC (STREAK)
+  const [streak, setStreak] = useState(0); // Mặc định là 0
   const [lastStudyDate, setLastStudyDate] = useState(null);
 
+  // 1. TẢI CHUỖI NGÀY LÊN KHI ĐĂNG NHẬP
+  useEffect(() => {
+    if (currentUser) {
+      const savedStreak = localStorage.getItem(`streak_${currentUser.uid}`);
+      const savedDate = localStorage.getItem(`lastDate_${currentUser.uid}`);
+      if (savedStreak) setStreak(parseInt(savedStreak));
+      if (savedDate) setLastStudyDate(parseInt(savedDate));
+    }
+  }, [currentUser]);
+
+  // 2. CẬP NHẬT VÀ LƯU VĨNH VIỄN
   const updateStreak = () => {
+    if (!currentUser) return;
     const now = new Date();
-    // 1. Ép thời gian hiện tại về chuẩn 0h:00:00 của hôm nay
+    // Ép về 0h00 của ngày hôm nay
     const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     
     if (!lastStudyDate) {
       setStreak(1);
       setLastStudyDate(todayMidnight);
+      localStorage.setItem(`streak_${currentUser.uid}`, 1);
+      localStorage.setItem(`lastDate_${currentUser.uid}`, todayMidnight);
       return;
     }
 
-    const last = new Date(lastStudyDate);
-    // 2. Ép thời gian học lần cuối về chuẩn 0h:00:00 của ngày hôm đó
-    const lastMidnight = new Date(last.getFullYear(), last.getMonth(), last.getDate()).getTime();
+    // Tính khoảng cách giữa hôm nay và ngày học cuối
+    const diffDays = Math.round((todayMidnight - lastStudyDate) / (1000 * 60 * 60 * 24));
 
-    // 3. Dùng Math.round để tính số ngày (Tránh sai số giờ giấc)
-    const diffDays = Math.round((todayMidnight - lastMidnight) / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 1) {
-      setStreak(prev => prev + 1); // Tiếp tục chuỗi
+    if (diffDays === 1) { // Hôm qua có học -> Cộng dồn chuỗi
+      setStreak(prev => {
+        const newVal = prev + 1;
+        localStorage.setItem(`streak_${currentUser.uid}`, newVal);
+        return newVal;
+      });
       setLastStudyDate(todayMidnight);
-    } else if (diffDays > 1) {
-      setStreak(1); // Gãy chuỗi, bắt đầu lại
+      localStorage.setItem(`lastDate_${currentUser.uid}`, todayMidnight);
+    } else if (diffDays > 1) { // Nghỉ quá 1 ngày -> Gãy chuỗi, quay về 1
+      setStreak(1);
       setLastStudyDate(todayMidnight);
+      localStorage.setItem(`streak_${currentUser.uid}`, 1);
+      localStorage.setItem(`lastDate_${currentUser.uid}`, todayMidnight);
     }
   };
 
+  // 3. NÚT TEST GIẢ LẬP QUA NGÀY
   const handleSimulateNextDay = () => {
-    setLastStudyDate(prev => {
-      const now = new Date();
-      // Giả lập: Ép mốc thời gian về chính xác 0h:00:00 của "Hôm qua"
-      const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-      return yesterday.getTime();
-    });
-    console.log("Đã lùi mốc thời gian học cuối về 0h00 hôm qua!");
+    if (!currentUser) return;
+    const now = new Date();
+    // Giả lập lùi mốc thời gian học cuối về 0h00 của ngày HÔM QUA
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+    
+    setLastStudyDate(yesterday);
+    localStorage.setItem(`lastDate_${currentUser.uid}`, yesterday);
+    
+    alert("⏳ Đã lùi cỗ máy thời gian về ngày HÔM QUA! Giờ Hà hãy vào Luyện tập chơi thử 1 game để xem chuỗi có tăng lên không nhé!");
   };
-
-
  
 
   const [gameHistory, setGameHistory] = useState([]);
