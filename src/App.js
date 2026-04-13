@@ -2754,7 +2754,7 @@ function SetsTab({ sets, vocab, onCreateSet, onDeleteSet, onOpenSet, libraries, 
           <Plus size={20} /> Tạo bộ từ mới
         </button>
         <button onClick={() => setShowLibrary(true)} className={`w-full sm:w-auto font-bold py-3.5 px-8 rounded-2xl flex items-center justify-center gap-3 shadow-lg transition-all hover:-translate-y-1 backdrop-blur-xl ${isDarkMode ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10' : 'bg-white border border-gray-100 text-gray-800 hover:bg-gray-50'}`}>
-          <BookOpen size={20} className="text-yellow-500" /> Từ vựng theo lộ trình
+          <BookOpen size={20} className="text-yellow-500" /> Sách từ vựng
         </button>
       </div>
 
