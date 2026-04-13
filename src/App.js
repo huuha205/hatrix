@@ -404,119 +404,88 @@ function HomeTab({ vocab, onNavigate, isDarkMode, streak, onSimulateNextDay }) {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(now.getDate() - i);
-      result.push({
-        date: d.getDate(),
-        dayName: days[d.getDay()],
-        isToday: i === 0
-      });
+      result.push({ date: d.getDate(), dayName: days[d.getDay()], isToday: i === 0 });
     }
     return result;
   }, []);
 
   const stats = [
-    { l: 'Tổng từ', v: vocab.length, color: 'from-blue-400 to-cyan-400', bg: 'bg-blue-500/10', text: 'text-blue-400' },
-    { l: 'Đã thuộc', v: masteredCount, color: 'from-emerald-400 to-green-400', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
-    { l: 'Tiến độ', v: vocab.length > 0 ? `${Math.round((masteredCount / vocab.length) * 100)}%` : '0%', color: 'from-purple-400 to-fuchsia-400', bg: 'bg-purple-500/10', text: 'text-purple-400' },
-    { l: 'Cần ôn', v: dueCount, color: 'from-rose-400 to-red-400', bg: 'bg-rose-500/10', text: 'text-rose-400' }
+    { l: 'Tổng từ vựng', v: vocab.length },
+    { l: 'Đã thông thạo', v: masteredCount },
+    { l: 'Tỉ lệ hoàn thành', v: vocab.length > 0 ? `${Math.round((masteredCount / vocab.length) * 100)}%` : '0%' },
+    { l: 'Cần ôn tập', v: dueCount }
   ];
 
   return (
-    <div className="max-w-5xl mx-auto pt-6 space-y-8 animate-in fade-in duration-700 px-4 font-sans pb-12">
-
-      {/* ✨ Ô 1: HERO BANNER - Glassmorphism & Soft Glow */}
-      <div className={`relative w-full rounded-[32px] p-8 sm:p-10 overflow-hidden ${isDarkMode ? 'bg-[#1e1f29]/60 border border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.2)]' : 'bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]'} backdrop-blur-xl flex flex-col md:flex-row items-center justify-between group transition-all`}>
-        {/* Soft background glows (Hai đốm sáng mờ ảo phía sau) */}
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-indigo-500/30 transition-colors duration-700"></div>
-        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-purple-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-purple-500/30 transition-colors duration-700"></div>
-
-        <div className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
-          <h2 className={`text-3xl sm:text-4xl font-black mb-3 tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Chào mừng trở lại! 👋
+    <div className="max-w-5xl mx-auto pt-8 space-y-8 animate-in fade-in duration-500 px-4 font-sans pb-12">
+      {/* Lời chào */}
+      <div className={`w-full rounded-xl p-8 sm:p-10 border ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'} flex flex-col md:flex-row items-center justify-between`}>
+        <div>
+          <h2 className={`text-2xl sm:text-3xl font-bold mb-2 tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+            Tổng quan học tập
           </h2>
-          <p className={`text-sm sm:text-base font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            Sẵn sàng bứt phá giới hạn từ vựng của bạn hôm nay chưa?
+          <p className={`text-sm sm:text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+            Tiếp tục duy trì tiến độ học từ vựng của bạn hôm nay.
           </p>
-        </div>
-        <div className="relative z-10 mt-6 md:mt-0">
-           <div className={`w-20 h-20 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-100'} shadow-lg group-hover:scale-105 transition-transform duration-500`}>
-              <Zap size={36} className="text-indigo-400 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]" />
-           </div>
         </div>
       </div>
 
-      {/* ✨ Ô 2: THỐNG KÊ - Floating Cards with Gradient Text */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 w-full">
+      {/* Thống kê cơ bản */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
         {stats.map((s, i) => (
-          <div key={i} className={`relative overflow-hidden rounded-[24px] flex flex-col items-center justify-center p-6 transition-all duration-300 hover:-translate-y-1 ${isDarkMode ? 'bg-[#1e1f29]/60 border border-white/5 shadow-lg hover:shadow-indigo-500/10' : 'bg-white border border-gray-100 shadow-sm hover:shadow-xl'}`}>
-            <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"></div>
-            <div className={`text-4xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-br ${s.color} drop-shadow-sm mb-2`}>
-              {s.v}
-            </div>
-            <div className={`text-[11px] sm:text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              {s.l}
-            </div>
+          <div key={i} className={`rounded-xl flex flex-col p-6 border transition-colors ${isDarkMode ? 'bg-slate-800/30 border-slate-700 hover:border-blue-500/50' : 'bg-white border-slate-200 shadow-sm hover:border-blue-400'}`}>
+            <div className={`text-3xl sm:text-4xl font-bold tracking-tight mb-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{s.v}</div>
+            <div className={`text-xs font-medium uppercase tracking-wide ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{s.l}</div>
           </div>
         ))}
       </div>
 
-      {/* ✨ Ô 3: CHUỖI NGÀY HỌC - Smooth Gradient & Soft Shadows */}
-      <div className="w-full bg-gradient-to-br from-orange-400 to-rose-500 rounded-[32px] p-8 sm:p-10 shadow-[0_15px_40px_rgba(244,63,94,0.3)] flex flex-col xl:flex-row justify-between xl:items-center gap-8 relative overflow-hidden transition-all hover:shadow-[0_20px_50px_rgba(244,63,94,0.4)]">
-        {/* Glow hiệu ứng hạt nổi */}
-        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_50%)] pointer-events-none"></div>
-
-        <div className="flex flex-col z-10 text-white">
-          <div className="flex items-center gap-3 font-bold uppercase text-xs sm:text-sm mb-3 tracking-widest opacity-90">
-            <Flame size={20} className="fill-white drop-shadow-md" /> Chuỗi ngày học
-            <button onClick={onSimulateNextDay} className="ml-2 sm:ml-4 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] transition-all border border-white/20 active:scale-95 shadow-sm">Test qua ngày</button>
+      {/* Hoạt động (Streak) */}
+      <div className={`w-full rounded-xl p-8 border ${isDarkMode ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'} flex flex-col xl:flex-row justify-between xl:items-center gap-8`}>
+        <div className="flex flex-col">
+          <div className={`flex items-center gap-2 font-semibold text-sm mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            <Activity size={18} className="text-blue-500" /> Tần suất hoạt động
+            <button onClick={onSimulateNextDay} className={`ml-3 px-3 py-1 rounded text-[10px] border transition-colors ${isDarkMode ? 'border-slate-600 text-slate-400 hover:bg-slate-700' : 'border-slate-300 text-slate-500 hover:bg-slate-50'}`}>Test ngày mới</button>
           </div>
-          <div className="text-6xl sm:text-7xl font-black flex items-baseline gap-3 tracking-tighter drop-shadow-md">
-            {streak} <span className="text-xl sm:text-2xl font-bold opacity-80 uppercase tracking-widest">ngày</span>
+          <div className={`text-4xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+            {streak} <span className="text-lg font-medium text-slate-500">ngày liên tiếp</span>
           </div>
         </div>
-
-        <div className="flex justify-between sm:justify-end items-center gap-2 sm:gap-3 z-10 w-full xl:w-auto overflow-x-auto pb-2 custom-scrollbar">
+        <div className="flex justify-between sm:justify-end gap-2 sm:gap-4 overflow-x-auto custom-scrollbar pb-2">
           {last7Days.map((d, i) => (
             <div key={i} className="flex flex-col items-center gap-2 shrink-0">
-              <div className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center font-bold transition-all duration-300 text-sm sm:text-base rounded-2xl backdrop-blur-md ${d.isToday ? 'bg-white text-rose-500 shadow-[0_0_20px_rgba(255,255,255,0.4)] scale-110' : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'}`}>
-                {d.isToday ? <Flame size={24} className="fill-current drop-shadow-sm" /> : d.date}
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-sm font-semibold rounded-lg border ${d.isToday ? (isDarkMode ? 'bg-blue-500/20 text-blue-400 border-blue-500/50' : 'bg-blue-50 text-blue-600 border-blue-200') : (isDarkMode ? 'bg-transparent text-slate-500 border-slate-700' : 'bg-transparent text-slate-400 border-slate-200')}`}>
+                {d.date}
               </div>
-              <span className="text-[10px] sm:text-xs font-bold text-white/80 uppercase tracking-widest">{d.dayName}</span>
+              <span className={`text-[10px] font-medium uppercase ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{d.dayName}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ✨ Ô 4: TRUY CẬP NHANH - Minimal Floating Cards */}
+      {/* Truy cập nhanh */}
       <div className="pt-4">
-        <h2 className={`text-sm font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-6 ml-2`}>Truy cập nhanh</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+        <h2 className={`text-sm font-semibold uppercase tracking-wider mb-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Lối tắt</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
           {[
-            { id: 'vocab', icon: Plus, title: 'Thêm từ mới', desc: 'Xây dựng kho từ vựng cá nhân', color: 'from-cyan-400 to-blue-500', iconColor: 'text-cyan-500', shadow: 'hover:shadow-cyan-500/20' },
-            { id: 'games', icon: Zap, title: 'Luyện tập ngay', desc: 'Ôn tập với Flashcard & Game', color: 'from-fuchsia-400 to-purple-500', iconColor: 'text-fuchsia-500', shadow: 'hover:shadow-fuchsia-500/20' }
+            { id: 'vocab', icon: Plus, title: 'Thêm từ vựng', desc: 'Cập nhật kho từ vựng cá nhân' },
+            { id: 'games', icon: PlayCircle, title: 'Bắt đầu ôn tập', desc: 'Luyện tập qua các bài kiểm tra' }
           ].map((btn, i) => (
-            <div key={i} onClick={() => onNavigate(btn.id)} className={`relative overflow-hidden rounded-[24px] p-6 flex items-center justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 ${isDarkMode ? 'bg-[#1e1f29]/80 border border-white/5 shadow-lg' : 'bg-white border border-gray-100 shadow-md'} ${btn.shadow} group`}>
-               
-               {/* Line gradient phát sáng mờ khi hover */}
-               <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${btn.color}`}></div>
-               
-               <div className="flex items-center gap-5 relative z-10">
-                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDarkMode ? 'bg-[#252733]' : 'bg-gray-50'} ${btn.iconColor} shadow-inner group-hover:scale-110 transition-transform duration-300`}>
-                   <btn.icon size={26} strokeWidth={2.5}/>
+            <div key={i} onClick={() => onNavigate(btn.id)} className={`rounded-xl p-5 flex items-center justify-between cursor-pointer border transition-all ${isDarkMode ? 'bg-slate-800/30 border-slate-700 hover:border-slate-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50 shadow-sm'} group`}>
+               <div className="flex items-center gap-4">
+                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${isDarkMode ? 'bg-slate-800 border-slate-600 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'} group-hover:text-blue-500 transition-colors`}>
+                   <btn.icon size={20} strokeWidth={2}/>
                  </div>
                  <div>
-                   <div className={`font-black text-lg tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'} group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r ${btn.color} transition-all duration-300`}>{btn.title}</div>
-                   <div className={`text-[11px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{btn.desc}</div>
+                   <div className={`font-semibold text-base ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{btn.title}</div>
+                   <div className={`text-xs mt-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{btn.desc}</div>
                  </div>
                </div>
-               
-               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkMode ? 'text-gray-500 group-hover:text-white group-hover:bg-white/10' : 'text-gray-400 group-hover:text-gray-900 group-hover:bg-gray-100'} transition-all duration-300 relative z-10`}>
-                 <ArrowRight size={20} strokeWidth={2.5} />
-               </div>
+               <ArrowRight size={18} className={`${isDarkMode ? 'text-slate-600' : 'text-slate-400'} group-hover:text-blue-500 transition-colors`} />
             </div>
           ))}
         </div>
       </div>
-      
     </div>
   );
 }
@@ -1199,151 +1168,98 @@ function VocabTab({ vocab, onToggleMastered, onBulkAction, onOpenAddMultiple, is
   const toggleSelectAll = () => selectedIds.length === filteredVocab.length ? setSelectedIds([]) : setSelectedIds(filteredVocab.map(v => v.id));
 
   return (
-    <div className="max-w-6xl mx-auto pt-6 pb-12 animate-in fade-in duration-500 font-sans">
-      
-      {/* 🚀 1. THẺ THỐNG KÊ (NEO-BRUTALISM) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8 px-4">
-        {[
-          { label: 'Tổng từ', value: totalCount, icon: Book, bg: 'bg-[#3b82f6]', text: 'text-white' },
-          { label: 'Đã thuộc', value: masteredCount, icon: Check, bg: 'bg-[#ccff00]', text: 'text-[#13151b]' },
-          { label: 'Cần ôn', value: unmasteredCount, icon: Clock, bg: 'bg-[#f97316]', text: 'text-[#13151b]' },
-          { label: 'Tiến độ', value: `${progressPercentage}%`, icon: null, bg: 'bg-[#a855f7]', text: 'text-white' }
-        ].map((stat, idx) => (
-          <div key={idx} className={`border-4 border-white ${stat.bg} rounded-2xl p-5 flex items-center gap-4 shadow-[6px_6px_0px_white] hover:-translate-y-1 hover:shadow-[8px_8px_0px_white] transition-all`}>
-            <div className={`w-12 h-12 border-4 border-white bg-[#13151b] rounded-xl flex items-center justify-center shrink-0`}>
-              {stat.icon ? <stat.icon size={24} className="text-white" strokeWidth={3}/> : <span className="text-white font-black text-xl">%</span>}
-            </div>
-            <div className="flex flex-col">
-              <span className={`text-[11px] font-black uppercase tracking-widest opacity-80 ${stat.text}`}>{stat.label}</span>
-              <span className={`text-3xl font-black tracking-tighter ${stat.text}`}>{stat.value}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* 🚀 2. THANH TÌM KIẾM & CHỨC NĂNG */}
-      <div className="bg-[#1e1f29] border-4 border-white rounded-2xl p-4 flex flex-col md:flex-row items-center gap-4 mx-4 mb-8 shadow-[8px_8px_0px_white]">
-        
-        {/* Ô Search */}
-        <div className="relative flex-1 w-full">
-          <Search size={20} strokeWidth={3} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"/>
+    <div className="max-w-6xl mx-auto pt-8 pb-12 animate-in fade-in duration-500 font-sans px-4">
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+        <div className={`relative flex-1 w-full md:max-w-md rounded-lg border overflow-hidden ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-300 shadow-sm'}`}>
+          <Search size={18} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}/>
           <input 
             type="text" 
             placeholder="Tìm kiếm từ vựng..." 
             value={searchQuery} 
             onChange={(e) => setSearchQuery(e.target.value)} 
-            className="w-full bg-[#13151b] border-4 border-white text-white rounded-xl py-3 pl-12 pr-6 font-bold outline-none focus:border-[#00e5ff] focus:shadow-[4px_4px_0px_#00e5ff] transition-all placeholder:text-gray-500" 
+            className={`w-full py-2.5 pl-10 pr-4 text-sm outline-none bg-transparent ${isDarkMode ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-800 placeholder:text-slate-400'}`} 
           />
         </div>
         
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          {/* Nút Lọc */}
-          <div className="relative w-full md:w-40 shrink-0">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full md:w-auto">
             <select 
               value={filterStatus} 
               onChange={(e) => setFilterStatus(e.target.value)} 
-              className="w-full bg-[#13151b] border-4 border-white text-white rounded-xl py-3 px-4 font-bold outline-none cursor-pointer appearance-none focus:border-[#00e5ff] focus:shadow-[4px_4px_0px_#00e5ff] transition-all"
+              className={`w-full appearance-none py-2.5 pl-4 pr-10 rounded-lg border text-sm font-medium outline-none cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-700 shadow-sm'}`}
             >
-              <option value="all">Tất cả</option>
-              <option value="unmastered">Chưa thuộc</option>
-              <option value="mastered">Đã thuộc</option>
+              <option value="all">Tất cả trạng thái</option>
+              <option value="unmastered">Cần ôn tập</option>
+              <option value="mastered">Đã thông thạo</option>
             </select>
-            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white"><ChevronDown size={20} strokeWidth={3}/></div>
+            <ChevronDown size={16} className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}/>
           </div>
           
-          {/* Nút Thêm Nhiều */}
-          <button 
-            onClick={onOpenAddMultiple} 
-            className="bg-[#ccff00] text-[#13151b] border-4 border-[#13151b] font-black py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-1 shadow-[4px_4px_0px_#13151b] hover:shadow-[6px_6px_0px_#13151b] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all whitespace-nowrap"
-          >
-            <Layers size={20} strokeWidth={3}/> THÊM TỪ
+          <button onClick={onOpenAddMultiple} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-5 rounded-lg flex items-center gap-2 text-sm transition-colors whitespace-nowrap shadow-sm">
+            <Plus size={16}/> Thêm từ
           </button>
         </div>
       </div>
       
-      {/* 🚀 3. BẢNG TỪ VỰNG */}
-      <div className="mx-4 bg-[#1e1f29] border-4 border-white rounded-2xl overflow-hidden relative shadow-[8px_8px_0px_white]">
+      {/* Table */}
+      <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
         
-        {/* Toolbar hiện lên khi chọn nhiều từ */}
         {selectedIds.length > 0 && (
-          <div className="bg-[#00e5ff] border-b-4 border-white p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-2 sticky top-0 z-20">
-            <div className="flex items-center gap-6">
-              <div className="text-[#13151b] font-black text-xl tracking-tight uppercase">Đã chọn {selectedIds.length} từ</div>
-              <button onClick={() => setSelectedIds([])} className="text-[#13151b] hover:bg-[#13151b] hover:text-white px-3 py-1 rounded-lg flex items-center gap-1 text-xs font-black uppercase tracking-widest transition-colors border-2 border-transparent hover:border-[#13151b]"><X size={16} strokeWidth={3}/> Bỏ chọn</button>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => { onBulkAction('mastered', selectedIds); setSelectedIds([]); }} className="bg-[#ccff00] text-[#13151b] border-4 border-[#13151b] px-6 py-2.5 rounded-xl font-black text-xs uppercase shadow-[4px_4px_0px_#13151b] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all">Đánh dấu Thuộc</button>
-              <button onClick={() => { onBulkAction('delete', selectedIds); setSelectedIds([]); }} className="bg-[#ef4444] text-[#13151b] border-4 border-[#13151b] px-6 py-2.5 rounded-xl font-black text-xs uppercase shadow-[4px_4px_0px_#13151b] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all">Xóa từ</button>
+          <div className={`p-3 flex items-center justify-between border-b ${isDarkMode ? 'bg-slate-700/50 border-slate-700' : 'bg-blue-50 border-slate-200'}`}>
+            <span className={`text-sm font-medium ${isDarkMode ? 'text-slate-200' : 'text-blue-800'}`}>Đã chọn {selectedIds.length} mục</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => { onBulkAction('mastered', selectedIds); setSelectedIds([]); }} className="px-3 py-1.5 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700">Đánh dấu thuộc</button>
+              <button onClick={() => { onBulkAction('delete', selectedIds); setSelectedIds([]); }} className={`px-3 py-1.5 rounded-md text-xs font-medium border ${isDarkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}>Xóa</button>
             </div>
           </div>
         )}
         
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead className="bg-[#13151b] border-b-4 border-white">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className={`border-b ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
               <tr>
-                <th className="py-5 px-6 w-[5%] border-r-4 border-white/20">
-                  <button onClick={toggleSelectAll} className="flex items-center justify-center w-full">
-                    <div className={`w-6 h-6 flex items-center justify-center border-4 border-white rounded-md transition-all ${selectedIds.length > 0 ? 'bg-[#00e5ff] text-[#13151b]' : 'bg-transparent'}`}>
-                      {selectedIds.length > 0 && <Minus size={16} strokeWidth={5}/>}
-                    </div>
-                  </button>
+                <th className="py-3 px-4 w-12 text-center">
+                  <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === filteredVocab.length} onChange={toggleSelectAll} className="cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"/>
                 </th>
-                <th className="py-5 px-6 text-[12px] font-black text-white uppercase tracking-widest w-[20%] border-r-4 border-white/20">TỪ VỰNG</th>
-                <th className="py-5 px-6 text-[12px] font-black text-white uppercase tracking-widest w-[20%] border-r-4 border-white/20">NGHĨA</th>
-                <th className="py-5 px-4 text-[12px] font-black text-white uppercase tracking-widest text-center w-[10%] border-r-4 border-white/20">LOẠI TỪ</th>
-                <th className="py-5 px-6 text-[12px] font-black text-white uppercase tracking-widest w-[35%] border-r-4 border-white/20">VÍ DỤ</th>
-                <th className="py-5 px-4 text-[12px] font-black text-[#ccff00] uppercase tracking-widest text-center w-[10%]">THUỘC</th>
+                <th className="py-3 px-4 font-semibold">Từ vựng</th>
+                <th className="py-3 px-4 font-semibold">Định nghĩa</th>
+                <th className="py-3 px-4 font-semibold text-center">Loại</th>
+                <th className="py-3 px-4 font-semibold">Ví dụ</th>
+                <th className="py-3 px-4 font-semibold text-center">Trạng thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y-4 divide-white/20 bg-[#1e1f29]">
+            <tbody className={`divide-y ${isDarkMode ? 'divide-slate-700/50' : 'divide-slate-100'}`}>
               {filteredVocab.length === 0 ? (
-                <tr><td colSpan="6" className="py-16 text-center text-gray-400 font-bold text-lg uppercase tracking-widest">Không tìm thấy từ vựng nào</td></tr>
+                <tr><td colSpan="6" className={`py-12 text-center ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Không có dữ liệu phù hợp.</td></tr>
               ) : (
                 filteredVocab.map((item) => {
                   const isSelected = selectedIds.includes(item.id);
                   const isMastered = item.level === 5;
-                  
                   return (
-                    <tr 
-                      key={item.id} 
-                      onClick={() => setEditingWord(item)} 
-                      className={`transition-colors cursor-pointer hover:bg-white/5 ${isSelected ? 'bg-white/10' : ''}`}
-                    >
-                      <td className="py-5 px-6 border-r-4 border-white/20">
-                        <button onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }} className="flex items-center justify-center w-full">
-                          <div className={`w-6 h-6 flex items-center justify-center border-4 rounded-md transition-all ${isSelected ? 'bg-[#00e5ff] border-white text-[#13151b] shadow-[2px_2px_0px_white]' : 'border-gray-500 bg-transparent hover:border-white'}`}>
-                            {isSelected && <Check size={16} strokeWidth={5}/>}
-                          </div>
-                        </button>
+                    <tr key={item.id} onClick={() => setEditingWord(item)} className={`cursor-pointer transition-colors ${isSelected ? (isDarkMode ? 'bg-slate-700/30' : 'bg-blue-50/50') : (isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
+                      <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(item.id)} className="cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"/>
                       </td>
-                      <td className="py-5 px-6 border-r-4 border-white/20">
-                        <div className="flex items-start gap-4">
-                          <button onClick={(e) => { e.stopPropagation(); playAudio(item.word); }} className="mt-1 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white hover:bg-[#ccff00] hover:text-black transition-colors shrink-0"><Volume2 size={16} strokeWidth={3}/></button>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <button onClick={(e) => { e.stopPropagation(); playAudio(item.word); }} className={`p-1 rounded-md transition-colors ${isDarkMode ? 'text-slate-400 hover:text-blue-400 hover:bg-slate-700' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100'}`}><Volume2 size={14}/></button>
                           <div>
-                            <div className="font-black text-white text-lg leading-tight uppercase tracking-tight">{item.word}</div>
-                            <div className="text-[13px] text-[#00e5ff] font-bold mt-1 tracking-widest">{item.phonetic}</div>
+                            <div className={`font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{item.word}</div>
+                            <div className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{item.phonetic}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-5 px-6 border-r-4 border-white/20">
-                        <div className="text-gray-200 font-bold text-base">{item.meaning}</div>
+                      <td className={`py-3 px-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{item.meaning}</td>
+                      <td className="py-3 px-4 text-center">
+                        <span className={`text-[10px] font-medium px-2 py-1 rounded uppercase ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{item.type}</span>
                       </td>
-                      <td className="py-5 px-4 text-center border-r-4 border-white/20">
-                        <span className="bg-[#13151b] text-white border-2 border-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase shadow-[2px_2px_0px_white] inline-block">{item.type}</span>
+                      <td className={`py-3 px-4 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        <div className="truncate max-w-[200px] sm:max-w-xs">{item.example}</div>
                       </td>
-                      <td className="py-5 px-6 border-r-4 border-white/20">
-                        <div className="text-sm">
-                          <div className="text-gray-300 font-medium italic mb-2 leading-relaxed border-l-4 border-[#00e5ff] pl-3">"{item.example}"</div>
-                          <div className="text-[#ccff00] font-bold text-xs uppercase tracking-widest pl-4">📝 {item.note || item.exampleTrans}</div>
-                        </div>
-                      </td>
-                      <td className="py-5 px-4 text-center">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); onToggleMastered(item.id); }} 
-                          className={`w-10 h-10 mx-auto flex items-center justify-center border-4 rounded-xl transition-all active:translate-y-1 active:translate-x-1 active:shadow-none ${isMastered ? 'bg-[#ccff00] border-white text-[#13151b] shadow-[3px_3px_0px_white]' : 'bg-[#13151b] border-gray-600 text-transparent hover:border-white'}`}
-                        >
-                          <Check size={20} strokeWidth={5} />
+                      <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => onToggleMastered(item.id)} className={`w-6 h-6 flex items-center justify-center rounded-full border transition-colors ${isMastered ? 'bg-blue-50 border-blue-200 text-blue-600' : (isDarkMode ? 'border-slate-600 text-transparent hover:border-blue-400' : 'border-slate-300 text-transparent hover:border-blue-300')}`}>
+                          <Check size={12} strokeWidth={3} />
                         </button>
                       </td>
                     </tr>
@@ -1355,21 +1271,8 @@ function VocabTab({ vocab, onToggleMastered, onBulkAction, onOpenAddMultiple, is
         </div>
       </div>
       
-      {/* 4. MODAL CHỈNH SỬA TRONG VOCABTAB */}
       {editingWord && (
-        <EditWordModal 
-          word={editingWord} 
-          isDarkMode={isDarkMode} 
-          onClose={() => setEditingWord(null)} 
-          onSave={(updatedWord) => {
-            if (typeof onUpdateWord === 'function') {
-              onUpdateWord(updatedWord); 
-            } else {
-              console.error("Lỗi: Chưa nhận được hàm onUpdateWord từ App.js");
-            }
-            setEditingWord(null); 
-          }} 
-        />
+        <EditWordModal word={editingWord} isDarkMode={isDarkMode} onClose={() => setEditingWord(null)} onSave={(updatedWord) => { onUpdateWord && onUpdateWord(updatedWord); setEditingWord(null); }} />
       )}
     </div>
   );
@@ -1381,7 +1284,6 @@ function GamesTab({ vocab, sets, onStartCustomGame, onOpenSRS, history, isDarkMo
   const [statusFilter, setStatusFilter] = useState('unmastered');
   const [orderMode, setOrderMode] = useState('random');
   const [wordCount, setWordCount] = useState('20');
-  const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
   
   const availableWords = useMemo(() => {
       let list = [...vocab];
@@ -1403,243 +1305,70 @@ function GamesTab({ vocab, sets, onStartCustomGame, onOpenSRS, history, isDarkMo
       onStartCustomGame(gameId, finalWords);
   };
 
-  // SỬA LẠI MÀU GAME THÀNH MÀU SOLID (KHÔNG DÙNG GRADIENT NỮA)
   const games = [
-    { id: 'flashcard', name: 'Flashcard', desc: 'Lật thẻ học từ vựng', icon: List, color: 'bg-[#a855f7]' },
-    { id: 'quiz', name: 'Trắc nghiệm', desc: 'Chọn đáp án đúng', icon: CheckSquare, color: 'bg-[#f97316]' },
-    { id: 'matching', name: 'Nối từ với nghĩa', desc: 'Ghép đôi từ vựng', icon: Grid, color: 'bg-[#3b82f6]' },
-    { id: 'typing', name: 'Gõ từ vựng', desc: 'Nhìn nghĩa gõ từ', icon: Type, color: 'bg-[#22c55e]' },
-    { id: 'listening', name: 'Nghe viết', desc: 'Nghe phát âm và viết', icon: Headphones, color: 'bg-[#06b6d4]' },
-    { id: 'mixed', name: 'Tổng hợp', desc: 'Hỗn hợp các loại', icon: Zap, color: 'bg-[#f43f5e]' },
+    { id: 'flashcard', name: 'Flashcards', desc: 'Ghi nhớ cơ bản', icon: Layers },
+    { id: 'quiz', name: 'Trắc nghiệm', desc: 'Kiểm tra nhận biết', icon: CheckSquare },
+    { id: 'matching', name: 'Ghép thẻ', desc: 'Phản xạ nhanh', icon: Grid },
+    { id: 'typing', name: 'Chính tả', desc: 'Luyện gõ từ vựng', icon: Type },
+    { id: 'listening', name: 'Nghe hiểu', desc: 'Luyện kỹ năng nghe', icon: Headphones },
+    { id: 'mixed', name: 'Tổng hợp', desc: 'Đánh giá toàn diện', icon: Zap },
   ];
   
   return (
-    <div className="max-w-5xl mx-auto pt-6 space-y-10 pb-12 animate-in fade-in duration-500 px-4 font-sans">
+    <div className="max-w-5xl mx-auto pt-8 space-y-8 pb-12 font-sans px-4">
       
-      {/* 🚀 PHONG CÁCH MỚI CỦA BANNER SRS: Viền trắng dày, bóng trắng cứng */}
-      <div className="w-full bg-[#d946ef] border-4 border-white rounded-2xl p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between shadow-[8px_8px_0px_white] hover:shadow-[12px_12px_0px_white] hover:-translate-y-1 transition-all">
-        <div className="text-center sm:text-left mb-6 sm:mb-0 relative z-10 flex-1">
-          <h2 className="text-white text-3xl sm:text-4xl font-black mb-3 tracking-tight uppercase border-b-4 border-white inline-block pb-1">Ôn tập nhắc lại</h2>
-          <p className="text-white text-sm sm:text-base font-bold max-w-lg leading-relaxed mt-2">Hệ thống tự động nhắc lại các từ vựng bạn sắp quên. Chống quên 100%!</p>
+      {/* Banner SRS Tối giản */}
+      <div className={`w-full rounded-xl p-6 sm:p-8 border flex flex-col sm:flex-row items-center justify-between transition-colors ${isDarkMode ? 'bg-blue-900/20 border-blue-900/50' : 'bg-blue-50 border-blue-100'}`}>
+        <div className="text-center sm:text-left mb-6 sm:mb-0">
+          <h2 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-blue-400' : 'text-blue-800'}`}>Hệ thống ôn tập ngắt quãng (SRS)</h2>
+          <p className={`text-sm ${isDarkMode ? 'text-blue-300/80' : 'text-blue-600/80'}`}>Phương pháp khoa học giúp chuyển từ vựng vào trí nhớ dài hạn.</p>
         </div>
-        <button onClick={onOpenSRS} className="bg-white text-black border-4 border-black font-black py-4 px-8 rounded-xl flex items-center gap-3 shadow-[6px_6px_0px_black] active:shadow-none active:translate-y-2 active:translate-x-2 text-lg uppercase tracking-widest transition-all whitespace-nowrap">
-          <RotateCw size={22} strokeWidth={3} /> Tổng quan
+        <button onClick={onOpenSRS} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg text-sm transition-colors whitespace-nowrap shadow-sm">
+          Xem danh sách cần ôn
         </button>
       </div>
 
-      {/* Khu vực Chọn Game */}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pl-2 border-b-4 border-white/20 pb-4">
-          <h3 className={`text-2xl font-black uppercase tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Khu Vực Luyện Tập</h3>
-          <span className="bg-[#1e1f29] text-white border-2 border-white font-bold px-4 py-2 rounded-lg text-sm shadow-[4px_4px_0px_white]">
-            SẴN SÀNG: {availableWords.length} TỪ
+      <div className={`rounded-xl border p-6 ${isDarkMode ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Cấu hình bài luyện tập</h3>
+          <span className={`text-xs font-medium px-3 py-1 rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+            Đang có {availableWords.length} từ
           </span>
         </div>
         
-        {/* Bộ lọc ngang - Đổi form vuông vức hơn */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Bộ từ vựng */}
-          <div className="flex flex-col gap-2">
-            <span className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Bộ từ vựng</span>
-            <div className="relative">
-              <select value={selectedSet} onChange={(e) => setSelectedSet(e.target.value)} className={`w-full appearance-none bg-[#1e1f29] text-white border-4 border-white rounded-lg px-4 py-3 cursor-pointer outline-none transition-all font-bold text-sm shadow-[4px_4px_0px_white] hover:-translate-y-0.5 pr-10`}>
-                <option value="all">Tất cả bộ từ</option>
-                {sets.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              <ChevronDown size={20} strokeWidth={3} className="absolute right-4 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Bộ lọc */}
-          <div className="flex flex-col gap-2">
-            <span className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Trạng thái</span>
-            <div className="relative">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={`w-full appearance-none bg-[#1e1f29] text-white border-4 border-white rounded-lg px-4 py-3 cursor-pointer outline-none transition-all font-bold text-sm shadow-[4px_4px_0px_white] hover:-translate-y-0.5 pr-10`}>
-                <option value="all">Tất cả</option>
-                <option value="unmastered">Chưa thuộc</option>
-                <option value="mastered">Đã thuộc</option>
-              </select>
-              <ChevronDown size={20} strokeWidth={3} className="absolute right-4 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Thứ tự */}
-          <div className="flex flex-col gap-2">
-            <span className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Thứ tự</span>
-            <div className="relative">
-              <select value={orderMode} onChange={(e) => setOrderMode(e.target.value)} className={`w-full appearance-none bg-[#1e1f29] text-white border-4 border-white rounded-lg px-4 py-3 cursor-pointer outline-none transition-all font-bold text-sm shadow-[4px_4px_0px_white] hover:-translate-y-0.5 pr-10`}>
-                <option value="random">Ngẫu nhiên</option>
-                <option value="seq">Theo danh sách</option>
-              </select>
-              <ChevronDown size={20} strokeWidth={3} className="absolute right-4 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Số lượng */}
-          <div className="flex flex-col gap-2">
-            <span className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Số lượng</span>
-            <div className="relative">
-              <select value={wordCount} onChange={(e) => setWordCount(e.target.value)} className={`w-full appearance-none bg-[#1e1f29] text-white border-4 border-white rounded-lg px-4 py-3 cursor-pointer outline-none transition-all font-bold text-sm shadow-[4px_4px_0px_white] hover:-translate-y-0.5 pr-10`}>
-                <option value="10">10 từ</option>
-                <option value="20">20 từ</option>
-                <option value="30">30 từ</option>
-                <option value="50">50 từ</option>
-                <option value="all">Tất cả</option>
-              </select>
-              <ChevronDown size={20} strokeWidth={3} className="absolute right-4 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
-            </div>
-          </div>
-        </div>
-
-        {/* 🚀 DANH SÁCH GAME CỰC CHẤT */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          {games.map(game => (
-            <div 
-              key={game.id} 
-              onClick={() => handlePlayGame(game.id)} 
-              // Điểm mấu chốt: Border trắng dày, Bóng trắng sắc nét, Lún nút khi click
-              className={`${game.color} rounded-xl p-5 flex items-center gap-5 cursor-pointer border-4 border-white shadow-[6px_6px_0px_white] hover:-translate-y-2 hover:shadow-[10px_10px_0px_white] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all group ${availableWords.length === 0 ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
-            >
-              <div className="w-16 h-16 rounded-xl border-4 border-white bg-black/20 flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
-                <game.icon size={28} strokeWidth={3} />
-              </div>
-              <div className="flex flex-col text-left text-white">
-                <h3 className="font-black text-xl uppercase tracking-tight mb-1">{game.name}</h3>
-                <p className="text-white text-xs font-bold uppercase tracking-widest">{game.desc}</p>
+        {/* Form cấu hình */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Nguồn', val: selectedSet, set: setSelectedSet, opts: [{value: 'all', text: 'Tất cả từ vựng'}, ...sets.map(s => ({value: s.id, text: s.name}))] },
+            { label: 'Phân loại', val: statusFilter, set: setStatusFilter, opts: [{value: 'all', text: 'Tất cả'}, {value: 'unmastered', text: 'Cần học'}, {value: 'mastered', text: 'Đã thuộc'}] },
+            { label: 'Thứ tự', val: orderMode, set: setOrderMode, opts: [{value: 'random', text: 'Ngẫu nhiên'}, {value: 'seq', text: 'Theo danh sách'}] },
+            { label: 'Số lượng', val: wordCount, set: setWordCount, opts: [{value: '10', text: '10 từ'}, {value: '20', text: '20 từ'}, {value: '30', text: '30 từ'}, {value: 'all', text: 'Tất cả'}] },
+          ].map((field, idx) => (
+            <div key={idx} className="flex flex-col gap-1.5">
+              <label className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{field.label}</label>
+              <div className="relative">
+                <select value={field.val} onChange={(e) => field.set(e.target.value)} className={`w-full appearance-none rounded-lg py-2.5 px-3 text-sm outline-none border transition-colors cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-200 focus:border-blue-500' : 'bg-white border-slate-300 text-slate-700 focus:border-blue-400'}`}>
+                  {field.opts.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
+                </select>
+                <ChevronDown size={14} className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
               </div>
             </div>
           ))}
         </div>
-      </div>
-      
-      {/* (Phần Lịch sử đấu bên dưới tạm thời giữ nguyên) */}
-    </div>
-  );
-}
 
-// --- COMPONENT TỔNG QUAN SRS ---
-function SRSOverviewModal({ vocab, sets, onClose, onStartReview, isDarkMode }) {
-  const [search, setSearch] = useState('');
-  const [filterSet, setFilterSet] = useState('all');
-  const [filterLevel, setFilterLevel] = useState('all');
-  const [reviewCount, setReviewCount] = useState(20);
-  const [reviewSet, setReviewSet] = useState('all');
-
-  const levelCounts = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  vocab.forEach(w => {
-    if (!w.nextReview || w.nextReview === 0) levelCounts[0]++;
-    else levelCounts[w.level || 1]++;
-  });
-  const maxCount = Math.max(...Object.values(levelCounts), 1);
-
-  const learningWords = vocab.filter(w => w.nextReview && w.nextReview > 0);
-  const filteredList = learningWords.filter(w => {
-    const mSearch = w.word.toLowerCase().includes(search.toLowerCase());
-    const mLevel = filterLevel === 'all' || (w.level || 1).toString() === filterLevel;
-    let mSet = true;
-    if (filterSet !== 'all') {
-      const targetSet = sets.find(s => s.id === filterSet);
-      mSet = targetSet ? targetSet.wordIds.includes(w.id) : false;
-    }
-    return mSearch && mLevel && mSet;
-  });
-
-  const dueWordsAll = getDueWords(vocab);
-  const dueWordsFiltered = reviewSet === 'all' 
-    ? dueWordsAll 
-    : dueWordsAll.filter(w => sets.find(s => s.id === reviewSet)?.wordIds.includes(w.id));
-  
-  const wordsToReview = Math.min(reviewCount, dueWordsFiltered.length);
-  const hasDue = wordsToReview > 0;
-
-  const barColors = {
-    0: 'bg-gray-400', 1: 'bg-orange-500', 2: 'bg-yellow-400', 
-    3: 'bg-blue-400', 4: 'bg-purple-500', 5: 'bg-green-500'
-  };
-
-  return (
-    <div className="fixed inset-0 bg-[#0f111a]/95 flex items-center justify-center z-[300] p-4 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className={`${isDarkMode ? 'bg-[#1e1f29] border-[#2a2c38]' : 'bg-white border-gray-200 shadow-2xl'} w-full max-w-[1000px] h-[85vh] rounded-[32px] border flex flex-col overflow-hidden animate-in zoom-in-95`}>
-        
-        <div className="p-6 flex items-center justify-between border-b border-white/5">
-          <div className="flex items-center gap-2 font-black text-xl tracking-tight">
-            <RotateCw size={24} className="text-pink-500"/> <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>Tổng quan SRS</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Settings size={22} className="text-gray-400 cursor-pointer hover:text-indigo-500 transition-colors"/>
-            <button onClick={onClose} className="text-gray-500 hover:text-red-500 transition-colors"><X size={28}/></button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-          <div className={`${isDarkMode ? 'border-white/10 bg-[#181a20]/50' : 'border-gray-100 bg-gray-50'} border rounded-3xl p-6 shadow-inner relative`}>
-            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-8">Phân bố từ vựng theo cấp độ</div>
-            <div className="flex items-end justify-around h-40 px-4">
-              {[0, 1, 2, 3, 4, 5].map(lvl => (
-                <div key={lvl} className="flex flex-col items-center gap-3 w-16 group">
-                  <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity`}>{levelCounts[lvl]}</span>
-                  <div className={`w-10 ${isDarkMode ? 'bg-[#2a2c38]' : 'bg-gray-200'} rounded-t-xl relative flex items-end justify-center h-full`}>
-                    <div className={`w-10 rounded-t-xl transition-all duration-1000 ${barColors[lvl]}`} style={{ height: `${(levelCounts[lvl] / maxCount) * 100}%`, minHeight: levelCounts[lvl] > 0 ? '10%' : '0' }}></div>
-                  </div>
-                  <span className={`text-[11px] font-black ${isDarkMode ? 'text-white' : 'text-gray-500'} uppercase tracking-widest`}>Lvl {lvl}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
-              <h3 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-black text-lg tracking-tight`}>Danh sách từ đang học ({learningWords.length})</h3>
-              <div className="flex flex-wrap items-center gap-3">
-                <input type="text" placeholder="Tìm..." value={search} onChange={e => setSearch(e.target.value)} className={`bg-transparent border ${isDarkMode ? 'border-white/10' : 'border-gray-200'} rounded-full px-4 py-2 text-sm outline-none focus:border-indigo-500 w-32`} />
-                <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)} className={`bg-transparent border ${isDarkMode ? 'border-white/10' : 'border-gray-200'} rounded-full px-4 py-2 text-sm text-gray-500 outline-none`}>
-                  <option value="all">Tất cả Level</option>
-                  {[1,2,3,4,5].map(l => <option key={l} value={l}>Lvl {l}</option>)}
-                </select>
+        {/* Danh sách hình thức luyện tập */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {games.map(game => (
+            <div key={game.id} onClick={() => handlePlayGame(game.id)} className={`rounded-xl p-4 flex items-start gap-4 border transition-all cursor-pointer ${availableWords.length === 0 ? 'opacity-50 pointer-events-none' : (isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50')}`}>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isDarkMode ? 'bg-slate-700 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                <game.icon size={20} strokeWidth={2} />
+              </div>
+              <div className="flex flex-col pt-0.5">
+                <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{game.name}</h3>
+                <p className={`text-xs mt-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{game.desc}</p>
               </div>
             </div>
-
-            <div className={`${isDarkMode ? 'bg-[#181a20]/30 border-white/5' : 'bg-white border-gray-100 shadow-sm'} border rounded-2xl overflow-hidden`}>
-              <table className="w-full text-left">
-                <thead className={`border-b ${isDarkMode ? 'border-white/5 bg-[#181a20]/50' : 'border-gray-100 bg-gray-50'}`}>
-                  <tr>
-                    <th className="py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest w-[25%]">Từ vựng</th>
-                    <th className="py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Nghĩa</th>
-                    <th className="py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center w-[15%]">Mức độ</th>
-                    <th className="py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right w-[20%]">Ôn tập</th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${isDarkMode ? 'divide-white/5' : 'divide-gray-50'}`}>
-                  {filteredList.slice(0, 50).map(w => (
-                    <tr key={w.id} className={`${isDarkMode ? 'hover:bg-white/5' : 'hover:bg-gray-50'} transition-colors`}>
-                      <td className={`py-3 px-6 font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{w.word}</td>
-                      <td className={`py-3 px-6 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} truncate`}>{w.meaning}</td>
-                      <td className="py-3 px-6 text-center">
-                        <span className="bg-yellow-500/20 text-yellow-500 text-xs font-bold px-3 py-1 rounded-md border border-yellow-500/30">Lv{w.level || 1}</span>
-                      </td>
-                      <td className="py-3 px-6 text-right text-sm font-medium text-cyan-400">{formatTimeLeft(w.nextReview)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className={`p-6 border-t ${isDarkMode ? 'border-[#2a2c38] bg-[#181a20]' : 'border-gray-100 bg-gray-50'} flex flex-col gap-4`}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-bold text-sm`}>Số từ ôn:</span>
-              <input type="number" value={reviewCount} onChange={e => setReviewCount(Number(e.target.value))} className={`${isDarkMode ? 'bg-[#2a2c38] border-white/10' : 'bg-white border-gray-200 shadow-sm'} border rounded-xl px-4 py-2.5 text-sm outline-none w-20 text-center font-bold`} min="1" max="100"/>
-            </div>
-            <button 
-              onClick={() => hasDue && onStartReview(dueWordsFiltered.slice(0, reviewCount))} 
-              disabled={!hasDue}
-              className={`px-8 py-3 rounded-xl font-black text-sm uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg ${hasDue ? 'bg-[#64bc04] hover:bg-[#74d404] text-white active:scale-95' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
-            >
-              <Play size={18} fill="currentColor"/> Bắt đầu ôn ({wordsToReview})
-            </button>
-          </div>
+          ))}
         </div>
       </div>
     </div>
@@ -2972,27 +2701,17 @@ function SetsTab({ sets, vocab, onCreateSet, onDeleteSet, onOpenSet, libraries, 
   }
 
   return (
-    <div className="max-w-6xl mx-auto pt-4 space-y-8 sm:space-y-12 pb-12 font-sans">
-      
-      {/* 🚀 HAI NÚT TRÊN CÙNG: Đổi sang phong cách khối hộp, viền đen/trắng, bóng cứng */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 px-4">
-        <button 
-          onClick={() => setIsModalOpen(true)} 
-          className="w-full sm:w-auto bg-[#ccff00] text-[#13151b] border-4 border-[#13151b] font-black py-3 sm:py-4 px-6 sm:px-8 rounded-xl flex items-center justify-center gap-3 shadow-[6px_6px_0px_#13151b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none active:bg-white uppercase tracking-widest text-sm transition-all"
-        >
-          <Plus size={24} strokeWidth={4} /> TẠO BỘ TỪ MỚI
+    <div className="max-w-6xl mx-auto pt-8 space-y-6 pb-12 font-sans px-4">
+      <div className="flex flex-col sm:flex-row items-center gap-3">
+        <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors">
+          <Plus size={18} /> Tạo bộ từ mới
         </button>
-        
-        <button 
-          onClick={() => setShowLibrary(true)} 
-          className="w-full sm:w-auto bg-[#00e5ff] text-[#13151b] border-4 border-[#13151b] font-black py-3 sm:py-4 px-6 sm:px-8 rounded-xl flex items-center justify-center gap-3 shadow-[6px_6px_0px_#13151b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none active:bg-white uppercase tracking-widest text-sm transition-all"
-        >
-          <BookOpen size={24} strokeWidth={3} /> TỪ VỰNG LỘ TRÌNH
+        <button onClick={() => setShowLibrary(true)} className={`w-full sm:w-auto font-medium py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm'}`}>
+          <BookOpen size={18} /> Từ vựng theo lộ trình
         </button>
       </div>
 
-      {/* 🚀 DANH SÁCH THẺ (CARDS): Xóa bỏ màu xám mờ nhạt, thay bằng thẻ viền trắng nổi bật */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
         {sets.map(set => {
           const setWords = set.wordIds.map(id => vocab.find(v => v.id === id)).filter(Boolean);
           const totalCount = setWords.length;
@@ -3000,49 +2719,33 @@ function SetsTab({ sets, vocab, onCreateSet, onDeleteSet, onOpenSet, libraries, 
           const progress = totalCount === 0 ? 0 : (masteredCount / totalCount) * 100;
 
           return (
-            <div 
-              key={set.id} 
-              className="bg-[#1e1f29] border-4 border-white rounded-2xl p-5 flex flex-col relative shadow-[8px_8px_0px_white] hover:-translate-y-2 hover:shadow-[12px_12px_0px_white] transition-all group"
-            >
-              {/* Header Thẻ */}
-              <div className="flex items-center gap-4 mb-4 border-b-4 border-white/20 pb-4">
-                <div className="bg-white text-[#13151b] w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 border-2 border-[#13151b] shadow-[4px_4px_0px_#13151b] group-hover:scale-110 transition-transform">
+            <div key={set.id} className={`rounded-xl p-5 flex flex-col border transition-all ${isDarkMode ? 'bg-slate-800/40 border-slate-700 hover:border-slate-500' : 'bg-white border-slate-200 shadow-sm hover:border-blue-300'} group`}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-600'}`}>
                   {set.icon}
                 </div>
-                <div>
-                  <h3 className="font-black text-white text-lg tracking-tight uppercase line-clamp-1 group-hover:text-[#ccff00] transition-colors">
-                    {set.name}
-                  </h3>
-                  <div className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">
-                    {totalCount} Từ Vựng
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className={`font-semibold text-base truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{set.name}</h3>
+                  <div className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{totalCount} từ vựng</div>
                 </div>
               </div>
 
-              {/* Thanh Tiến Độ (Chunky Health Bar) */}
-              <div className="w-full bg-[#13151b] h-5 border-2 border-white rounded-md overflow-hidden mb-2 p-0.5 shadow-inner">
-                <div className="bg-[#ccff00] h-full rounded-sm transition-all" style={{ width: `${progress}%` }}></div>
-              </div>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex justify-between">
-                <span>Tiến độ</span>
-                <span className="text-white">{masteredCount}/{totalCount} Thuộc</span>
+              <div className="mt-4 mb-4">
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Tiến độ</span>
+                  <span className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{Math.round(progress)}%</span>
+                </div>
+                <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                  <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                </div>
               </div>
 
-              {/* Các nút bấm cơ học ở đáy */}
-              <div className="flex items-center gap-3 mt-auto">
-                <button 
-                  onClick={() => onOpenSet(set)} 
-                  className="flex-1 bg-white text-[#13151b] border-2 border-white py-2.5 rounded-lg font-black uppercase tracking-widest shadow-[4px_4px_0px_white] hover:translate-y-1 hover:translate-x-1 hover:shadow-none hover:bg-[#ccff00] transition-all text-xs"
-                >
-                  XEM TỪ
+              <div className={`flex items-center gap-2 mt-auto pt-4 border-t ${isDarkMode ? 'border-slate-700/50' : 'border-slate-100'}`}>
+                <button onClick={() => onOpenSet(set)} className={`flex-1 py-2 rounded-md font-medium text-xs transition-colors ${isDarkMode ? 'bg-slate-700/50 text-blue-400 hover:bg-slate-700' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+                  Quản lý
                 </button>
-                
-                <button className="w-10 h-10 shrink-0 flex items-center justify-center bg-[#1e1f29] border-2 border-white text-white rounded-lg hover:bg-white hover:text-[#13151b] transition-all shadow-[3px_3px_0px_white] hover:translate-y-1 hover:translate-x-1 hover:shadow-none">
-                  <Play size={16} fill="currentColor" className="ml-0.5"/>
-                </button>
-                
-                <button onClick={(e) => { e.stopPropagation(); setDeletingSetId(set.id); }} className="w-10 h-10 shrink-0 flex items-center justify-center bg-[#1e1f29] border-2 border-[#ef4444] text-[#ef4444] rounded-lg hover:bg-[#ef4444] hover:text-white transition-all shadow-[3px_3px_0px_#ef4444] hover:translate-y-1 hover:translate-x-1 hover:shadow-none">
-                  <Trash2 size={16} strokeWidth={3}/>
+                <button onClick={(e) => { e.stopPropagation(); setDeletingSetId(set.id); }} className={`p-2 rounded-md transition-colors ${isDarkMode ? 'text-slate-500 hover:bg-slate-800 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-500'}`}>
+                  <Trash2 size={16}/>
                 </button>
               </div>
             </div>
@@ -3051,18 +2754,14 @@ function SetsTab({ sets, vocab, onCreateSet, onDeleteSet, onOpenSet, libraries, 
       </div>
 
       {isModalOpen && <CreateSetModal isDarkMode={isDarkMode} onClose={() => setIsModalOpen(false)} onCreate={onCreateSet} />}
-      
       {deletingSetId && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[600] p-4 backdrop-blur-sm">
-          <div className="bg-[#1e1f29] p-8 rounded-2xl w-full max-w-[400px] border-4 border-white shadow-[12px_12px_0px_white] flex flex-col items-center text-center animate-in zoom-in-95">
-            <div className="w-20 h-20 bg-[#ef4444] text-[#13151b] border-4 border-[#13151b] shadow-[6px_6px_0px_#13151b] rounded-xl flex items-center justify-center mb-6">
-              <Trash2 size={40} strokeWidth={3} />
-            </div>
-            <h3 className="text-2xl font-black mb-3 text-white tracking-tight uppercase">Xóa Bộ Từ Này?</h3>
-            <p className="text-gray-400 text-sm font-bold mb-8 uppercase tracking-wider">Không thể hoàn tác thao tác này!</p>
-            <div className="flex items-center gap-4 w-full">
-              <button onClick={() => setDeletingSetId(null)} className="flex-1 py-4 border-4 border-white text-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors shadow-[4px_4px_0px_white] hover:translate-y-1 hover:translate-x-1 hover:shadow-none">HỦY BỎ</button>
-              <button onClick={() => { onDeleteSet(deletingSetId); setDeletingSetId(null); }} className="flex-1 py-4 border-4 border-[#ef4444] bg-[#ef4444] text-[#13151b] font-black uppercase tracking-widest text-xs shadow-[4px_4px_0px_#ef4444] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all">XÓA NGAY</button>
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[600] p-4 backdrop-blur-sm">
+          <div className={`p-6 rounded-xl w-full max-w-[400px] border shadow-xl flex flex-col items-center text-center ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Xóa bộ từ vựng?</h3>
+            <p className={`text-sm mb-6 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Hành động này không thể hoàn tác.</p>
+            <div className="flex items-center gap-3 w-full">
+              <button onClick={() => setDeletingSetId(null)} className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-colors border ${isDarkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}>Hủy</button>
+              <button onClick={() => { onDeleteSet(deletingSetId); setDeletingSetId(null); }} className="flex-1 py-2.5 rounded-lg font-medium text-sm text-white bg-red-600 hover:bg-red-700 transition-colors">Xóa</button>
             </div>
           </div>
         </div>
@@ -3070,7 +2769,6 @@ function SetsTab({ sets, vocab, onCreateSet, onDeleteSet, onOpenSet, libraries, 
     </div>
   );
 }
-
 // --- 4. COMPONENT GỐC (APP) ---
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
