@@ -1883,7 +1883,6 @@ function MatchingView({ sessionWords, onAnswer, lives }) {
     </div>
   );
 }
-
 function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType, subMode, onFinish, onQuit, onUpdateMastered, isDarkMode }) {
   const [currentSessionWords, setCurrentSessionWords] = useState(initialSessionWords);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -1896,13 +1895,16 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
   const [feedbackTimer, setFeedbackTimer] = useState(4);
   const [feedbackWord, setFeedbackWord] = useState(null);
   const [mixedTypes, setMixedTypes] = useState([]);
+  
+  // 👉 THÊM BIẾN TRẠNG THÁI CHO NÚT PAUSE
+  const [isFeedbackPaused, setIsFeedbackPaused] = useState(false); 
 
   useEffect(() => {
-     setCurrentSessionWords(initialSessionWords);
-     if (gameType === 'mixed' || gameType === 'srs') {
-         const types = ['quiz', 'typing', 'listening'];
-         setMixedTypes(initialSessionWords.map(() => types[Math.floor(Math.random() * types.length)]));
-     }
+      setCurrentSessionWords(initialSessionWords);
+      if (gameType === 'mixed' || gameType === 'srs') {
+          const types = ['quiz', 'typing', 'listening'];
+          setMixedTypes(initialSessionWords.map(() => types[Math.floor(Math.random() * types.length)]));
+      }
   }, [initialSessionWords, gameType]);
 
   const activeGameType = (gameType === 'mixed' || gameType === 'srs') ? (mixedTypes[currentIndex] || 'quiz') : gameType;
@@ -1913,16 +1915,17 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
     return () => clearInterval(interval); 
   }, [currentIndex, showFeedback, showSummary]);
 
+  // 👉 LOGIC ĐỒNG HỒ ĐƯỢC CẬP NHẬT: Nếu bị Pause thì không trừ giây nữa
   useEffect(() => {
     let timerId;
-    if (showFeedback && feedbackTimer > 0) {
+    if (showFeedback && feedbackTimer > 0 && !isFeedbackPaused) {
       timerId = setTimeout(() => setFeedbackTimer(t => t - 1), 1000);
-    } else if (showFeedback && feedbackTimer === 0) {
+    } else if (showFeedback && feedbackTimer === 0 && !isFeedbackPaused) {
       handleAdvance();
     }
     return () => clearTimeout(timerId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showFeedback, feedbackTimer]);
+  }, [showFeedback, feedbackTimer, isFeedbackPaused]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1930,13 +1933,18 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
         e.preventDefault();
         handleAdvance();
       }
+      // 👉 Thêm phím tắt: Bấm phím SPACE (khoảng trắng) để Pause/Play nhanh
+      if (showFeedback && e.code === 'Space') {
+          e.preventDefault();
+          setIsFeedbackPaused(prev => !prev);
+      }
     };
     if (showFeedback) {
       window.addEventListener('keydown', handleKeyDown);
     }
     return () => window.removeEventListener('keydown', handleKeyDown);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showFeedback, currentIndex, results, activeGameType, currentSessionWords.length]);
+  }, [showFeedback, currentIndex, results, activeGameType, currentSessionWords.length, isFeedbackPaused]);
 
   const handleAnswer = (isCorrect, wordInfo = null) => {
     playFeedbackSound(isCorrect);
@@ -1950,6 +1958,7 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
       setFeedbackWord(targetWord); 
       setShowFeedback(true); 
       setFeedbackTimer(4); 
+      setIsFeedbackPaused(false); // Reset nút Pause
       playAudio(targetWord.word);
     } else {
       if (activeGameType === 'quiz' || activeGameType === 'typing' || activeGameType === 'listening') { 
@@ -1959,7 +1968,8 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
         setIsCorrectResponse(false); 
         setFeedbackWord(targetWord); 
         setShowFeedback(true); 
-        setFeedbackTimer(4); 
+        setFeedbackTimer(4);
+        setIsFeedbackPaused(false); // Reset nút Pause
       } else {
         setLives(l => Math.max(0, l - 1));
         if (lives <= 1) setShowSummary(true);
@@ -1970,9 +1980,9 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
   useEffect(() => {
     if (timer === 0 && !showFeedback && !showSummary) {
       if (activeGameType === 'matching') {
-        setShowSummary(true); // Game nối từ: Hết giờ là kết thúc luôn
+        setShowSummary(true); 
       } else {
-        handleAnswer(false); // Các game khác: Báo sai và hiện bảng đáp án
+        handleAnswer(false); 
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1980,6 +1990,7 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
 
   const handleAdvance = () => {
     setShowFeedback(false);
+    setIsFeedbackPaused(false);
     if (results.filter(r => r.isCorrect).length >= currentSessionWords.length) { 
       setShowSummary(true); 
       return; 
@@ -2008,6 +2019,7 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
       setLives(5);
       setShowSummary(false);
       setShowFeedback(false);
+      setIsFeedbackPaused(false);
     }
   };
 
@@ -2026,6 +2038,7 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
     setLives(5);
     setShowSummary(false);
     setShowFeedback(false);
+    setIsFeedbackPaused(false);
   };
 
   if (showSummary) {
@@ -2083,20 +2096,42 @@ function PracticeSession({ sessionWords: initialSessionWords, allVocab, gameType
           {activeGameType === 'listening' && <ListeningView key={currentSessionWords[currentIndex]?.id} word={currentSessionWords[currentIndex]} onAnswer={(c) => handleAnswer(c)} disabled={showFeedback} />}
         </div>
       </div>
+
+      {/* BẢNG ĐÁP ÁN PHÍA DƯỚI */}
       {showFeedback && feedbackWord && (
         <div className={`fixed bottom-0 left-0 right-0 p-10 text-[#13151b] z-50 shadow-[0_-20px_100px_rgba(0,0,0,0.4)] border-t-4 border-white/20 transition-colors ${isCorrectResponse ? 'bg-[#64bc04]' : 'bg-[#ef4444]'}`}>
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
-            <div className="flex flex-col gap-3 flex-1"><div className="flex items-center gap-4"><button onClick={() => playAudio(feedbackWord.word)} className="p-2 hover:scale-125 transition-transform"><Volume2 size={28} strokeWidth={3}/></button><div className="text-3xl font-black tracking-tight">Từ: {feedbackWord.word} <span className="text-lg font-bold opacity-70 uppercase tracking-widest">({feedbackWord.type.toLowerCase()})</span></div></div>
-              <div className="font-bold text-base opacity-80 pl-14 tracking-tighter">// {feedbackWord.phonetic} //</div><div className="text-2xl font-black mt-3 pl-14 tracking-tight">Nghĩa: {feedbackWord.meaning}</div>
-<div className="flex items-start gap-3 mt-3 pl-14 text-[#13151b]">
-  <button onClick={(e) => { e.stopPropagation(); playAudio(feedbackWord.example); }} className="mt-1.5 p-1 -ml-1 hover:scale-125 transition-transform cursor-pointer">
-    <Volume2 size={20} className="shrink-0 opacity-80 hover:opacity-100"/>
-  </button>
-  <div className="text-xl font-bold leading-tight opacity-95">Ví dụ: {getHighlightedExample(feedbackWord.example, feedbackWord.word)}</div>
-</div>
-<div className="text-base font-bold mt-2 pl-14 opacity-80 tracking-widest">Ghi chú: 📝 {feedbackWord.note || feedbackWord.exampleTrans || "Không có ghi chú"}</div>
+            <div className="flex flex-col gap-3 flex-1">
+              <div className="flex items-center gap-4">
+                <button onClick={() => playAudio(feedbackWord.word)} className="p-2 hover:scale-125 transition-transform"><Volume2 size={28} strokeWidth={3}/></button>
+                <div className="text-3xl font-black tracking-tight">Từ: {feedbackWord.word} <span className="text-lg font-bold opacity-70 uppercase tracking-widest">({feedbackWord.type.toLowerCase()})</span></div>
+              </div>
+              <div className="font-bold text-base opacity-80 pl-14 tracking-tighter">// {feedbackWord.phonetic} //</div>
+              <div className="text-2xl font-black mt-3 pl-14 tracking-tight">Nghĩa: {feedbackWord.meaning}</div>
+              <div className="flex items-start gap-3 mt-3 pl-14 text-[#13151b]">
+                <button onClick={(e) => { e.stopPropagation(); playAudio(feedbackWord.example); }} className="mt-1.5 p-1 -ml-1 hover:scale-125 transition-transform cursor-pointer">
+                  <Volume2 size={20} className="shrink-0 opacity-80 hover:opacity-100"/>
+                </button>
+                <div className="text-xl font-bold leading-tight opacity-95">Ví dụ: {getHighlightedExample(feedbackWord.example, feedbackWord.word)}</div>
+              </div>
+              <div className="text-base font-bold mt-2 pl-14 opacity-80 tracking-widest">Ghi chú: 📝 {feedbackWord.note || feedbackWord.exampleTrans || "Không có ghi chú"}</div>
             </div>
-            <div className="flex items-center gap-6 shrink-0"><button className="w-16 h-16 rounded-full border-4 border-[#13151b]/20 flex items-center justify-center hover:bg-[#13151b]/10 transition-colors shadow-sm"><Pause size={32} strokeWidth={4}/></button><button onClick={handleAdvance} className="bg-white text-[#13151b] font-black py-5 px-12 rounded-[24px] text-2xl shadow-2xl hover:scale-110 active:scale-90 transition-all flex items-center gap-4 uppercase tracking-widest shadow-xl">Tiếp tục ({feedbackTimer}s) <span className="text-sm font-bold opacity-60 ml-1">↵ Enter</span></button></div>
+            
+            {/* 👉 NÚT PAUSE VÀ TIẾP TỤC ĐÃ CÓ TÁC DỤNG */}
+            <div className="flex items-center gap-6 shrink-0">
+              <button 
+                onClick={() => setIsFeedbackPaused(!isFeedbackPaused)} 
+                className={`w-16 h-16 rounded-full border-4 flex items-center justify-center transition-all active:scale-95 shadow-sm ${isFeedbackPaused ? 'bg-[#13151b]/30 border-[#13151b]/50' : 'border-[#13151b]/20 hover:bg-[#13151b]/10'}`}
+              >
+                {isFeedbackPaused ? <Play size={32} strokeWidth={4} className="ml-1"/> : <Pause size={32} strokeWidth={4}/>}
+              </button>
+              
+              <button onClick={handleAdvance} className="bg-white text-[#13151b] font-black py-5 px-12 rounded-[24px] text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 uppercase tracking-widest shadow-xl">
+                Tiếp tục {isFeedbackPaused ? '' : `(${feedbackTimer}s)`} 
+                <span className="text-sm font-bold opacity-60 ml-1">↵ Enter</span>
+              </button>
+            </div>
+
           </div>
         </div>
       )}
