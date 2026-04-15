@@ -2920,8 +2920,36 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [vocab, setVocab] = useState(INITIAL_VOCAB);
-  const handleUpdateWord = (updatedWord) => {
-    setVocab(prevVocab => prevVocab.map(w => w.id === updatedWord.id ? updatedWord : w));
+  const handleUpdateWord = async (updatedWord) => {
+    try {
+      // 1. Lưu bản cập nhật lên mây (Firebase) trước
+      const wordRef = doc(db, "vocabularies", updatedWord.id);
+      
+      // Xóa id khỏi object trước khi lưu để tránh ghi thừa data vào Document
+      const { id, ...dataToUpdate } = updatedWord; 
+      await updateDoc(wordRef, dataToUpdate);
+
+      // 2. NẾU LƯU MÂY THÀNH CÔNG -> Cập nhật giao diện (State) ngay lập tức
+      setVocab(prevVocab => 
+        prevVocab.map(w => w.id === updatedWord.id ? updatedWord : w)
+      );
+
+      // Đồng bộ luôn vào các Bộ từ (Sets) nếu Hà đang mở chi tiết Bộ từ
+      if (currentSet) {
+        setSets(prevSets => prevSets.map(s => {
+          if (s.wordIds.includes(updatedWord.id)) {
+            // Ép React hiểu là Set này có thay đổi để nó vẽ lại
+            return { ...s }; 
+          }
+          return s;
+        }));
+      }
+
+      console.log("Đã cập nhật từ vựng thành công!");
+    } catch (error) {
+      console.error("Lỗi khi cập nhật từ vựng:", error);
+      alert("Không thể lưu thay đổi. Vui lòng kiểm tra kết nối mạng!");
+    }
   };
 
   
