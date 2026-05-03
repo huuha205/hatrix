@@ -199,7 +199,13 @@ function playAudio(text) {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
+    
+    // Kiểm tra xem chữ có chứa ký tự tiếng Nhật không (Hiragana, Katakana, Kanji)
+    const isJapanese = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]/.test(text);
+    
+    // Nếu là tiếng Nhật thì dùng giọng Nhật, ngược lại dùng giọng Anh
+    utterance.lang = isJapanese ? 'ja-JP' : 'en-US';
+    
     window.speechSynthesis.speak(utterance);
   }
 }
